@@ -39,6 +39,19 @@
         .dark .thumbnail {
              border: 2px solid #4b5563; /* gray-600 */
         }
+        /* Style for assignment feedback */
+        #assignment-feedback-container {
+            white-space: pre-wrap; /* Allows text to wrap and respects newlines */
+            text-align: left;
+            background-color: #f9fafb; /* gray-50 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .dark #assignment-feedback-container {
+            background-color: #1f2937; /* gray-800 */
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -57,7 +70,6 @@
                     <!-- Thumbnails will be added here -->
                 </div>
                 
-
                 <div class="mt-6 text-center" id="upload-prompt">
                     <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -72,9 +84,9 @@
                     <span>Add Photos</span>
                 </label>
                 
-                <div id="quiz-options" class="hidden">
-                    <div class="mt-6">
-                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions:</label>
+                <div id="quiz-options" class="hidden mt-4 space-y-4">
+                    <div>
+                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions (for Quiz):</label>
                         <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option>5</option>
                             <option selected>10</option>
@@ -85,9 +97,14 @@
                         </select>
                     </div>
 
-                    <button id="generate-quiz-btn" class="mt-4 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
-                        Generate Quiz
-                    </button>
+                    <div class="flex space-x-3">
+                        <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
+                            Generate Quiz
+                        </button>
+                         <button id="check-assignment-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
+                            Check Assignment
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -100,7 +117,7 @@
                     </svg>
                     <span class="sr-only">Loading...</span>
                 </div>
-                <h2 class="text-xl font-semibold mt-4">Generating Quiz...</h2>
+                <h2 id="loading-text" class="text-xl font-semibold mt-4">Generating Quiz...</h2>
                 <p class="text-gray-500 dark:text-gray-400 mt-1">Please wait a moment.</p>
             </div>
 
@@ -122,13 +139,22 @@
                 </button>
             </div>
 
-            <!-- Results State -->
+            <!-- Quiz Results State -->
             <div id="results-state" class="text-center p-8 hidden fade-in">
                 <h2 class="text-2xl font-bold">Quiz Complete!</h2>
                 <p id="score-text" class="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-4"></p>
                 <p id="score-message" class="text-gray-500 dark:text-gray-400"></p>
-                <button id="start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
-                    Create Another Quiz
+                <button id="quiz-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    Start Over
+                </button>
+            </div>
+            
+            <!-- Assignment Results State -->
+            <div id="assignment-results-state" class="p-4 hidden fade-in">
+                <h2 class="text-2xl font-bold text-center mb-4">Assignment Feedback</h2>
+                <div id="assignment-feedback-container" class="border dark:border-gray-600"></div>
+                <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    Start Over
                 </button>
             </div>
 
@@ -141,14 +167,17 @@
         const loadingState = document.getElementById('loading-state');
         const quizState = document.getElementById('quiz-state');
         const resultsState = document.getElementById('results-state');
+        const assignmentResultsState = document.getElementById('assignment-results-state');
 
         const imageUpload = document.getElementById('image-upload');
         const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
         const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
         const generateQuizBtn = document.getElementById('generate-quiz-btn');
+        const checkAssignmentBtn = document.getElementById('check-assignment-btn');
         const uploadPrompt = document.getElementById('upload-prompt');
         const quizOptions = document.getElementById('quiz-options');
         const questionCountSelect = document.getElementById('question-count');
+        const loadingText = document.getElementById('loading-text');
         
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -158,7 +187,10 @@
         
         const scoreText = document.getElementById('score-text');
         const scoreMessage = document.getElementById('score-message');
-        const startOverBtn = document.getElementById('start-over-btn');
+        const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
+        
+        const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
+        const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
 
         // App State
         let imageDataArray = [];
@@ -170,8 +202,10 @@
         // Event Listeners
         imageUpload.addEventListener('change', handleImageUpload);
         generateQuizBtn.addEventListener('click', generateQuiz);
+        checkAssignmentBtn.addEventListener('click', checkAssignment);
         nextQuestionBtn.addEventListener('click', showNextQuestion);
-        startOverBtn.addEventListener('click', resetApp);
+        quizStartOverBtn.addEventListener('click', resetApp);
+        assignmentStartOverBtn.addEventListener('click', resetApp);
 
         function handleImageUpload(event) {
             const files = event.target.files;
@@ -196,24 +230,70 @@
             uploadPrompt.classList.add('hidden');
             uploadButtonLabel.textContent = 'Add More Photos';
         }
-
-        async function generateQuiz() {
-            if (imageDataArray.length === 0) {
+        
+        function commonApiSetup() {
+             if (imageDataArray.length === 0) {
                 alert('Please upload one or more images first.');
-                return;
+                return false;
             }
             if (apiKey === "") {
                 alert("API Key is missing. Please add your Gemini API key to the script.");
-                return;
+                return false;
             }
-
             uploadState.classList.add('hidden');
             loadingState.classList.remove('hidden');
+            return true;
+        }
+        
+        async function checkAssignment() {
+            if (!commonApiSetup()) return;
+            loadingText.textContent = "Checking Assignment...";
+            
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question on the worksheet, provide the correct answer followed by a clear, easy-to-understand explanation. If the student's answer is visible and incorrect, gently point out the mistake in your explanation. The goal is to help the student learn the underlying concepts.
+
+Format your response clearly. Respond only in plain text. Do not use any special formatting characters like Markdown or LaTeX (e.g., avoid using '$', '#', or '*').`;
+
+            const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
+            
+            const parts = [ { text: userPrompt } ];
+            imageDataArray.forEach(data => {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: data
+                    }
+                });
+            });
+
+            const payload = {
+                contents: [{ parts: parts }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+            
+            try {
+                const responseText = await makeApiCall(payload);
+                if (responseText) {
+                    assignmentFeedbackContainer.textContent = responseText;
+                    loadingState.classList.add('hidden');
+                    assignmentResultsState.classList.remove('hidden');
+                } else {
+                    throw new Error("The AI could not provide feedback for this assignment.");
+                }
+            } catch (error) {
+                console.error("Error checking assignment:", error);
+                alert(`Failed to check assignment. ${error.message}. Please try again.`);
+                resetApp();
+            }
+        }
+
+        async function generateQuiz() {
+            if (!commonApiSetup()) return;
+            loadingText.textContent = "Generating Quiz...";
             
             const questionCount = questionCountSelect.value;
 
-            // --- PROMPT MODIFICATION ---
-            // This instruction tells the AI to avoid special formatting characters.
             const systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
             {
               "questions": [
@@ -227,7 +307,6 @@
             Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary.`;
 
             const userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
-            // --- END OF MODIFICATION ---
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
@@ -253,14 +332,7 @@
                                 type: "ARRAY",
                                 items: {
                                     type: "OBJECT",
-                                    properties: {
-                                        "question": { "type": "STRING" },
-                                        "options": {
-                                            "type": "ARRAY",
-                                            "items": { "type": "STRING" }
-                                        },
-                                        "answer": { "type": "STRING" }
-                                    },
+                                    properties: { "question": { "type": "STRING" }, "options": { "type": "ARRAY", "items": { "type": "STRING" }}, "answer": { "type": "STRING" }},
                                     required: ["question", "options", "answer"]
                                 }
                             }
@@ -271,30 +343,9 @@
             };
             
             try {
-                let response;
-                let retries = 3;
-                let delay = 1000;
-                for (let i = 0; i < retries; i++) {
-                    // Corrected the URL from 'generativelace' to 'generativelanguage'
-                    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) break;
-                    console.warn(`Request failed with status ${response.status}. Retrying in ${delay}ms...`);
-                    await new Promise(res => setTimeout(res, delay));
-                    delay *= 2;
-                }
-
-                if (!response.ok) {
-                    throw new Error(`API request failed with status ${response.status}`);
-                }
-                
-                const result = await response.json();
-                
-                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    const parsedJson = JSON.parse(result.candidates[0].content.parts[0].text);
+                const responseText = await makeApiCall(payload);
+                if (responseText) {
+                    const parsedJson = JSON.parse(responseText);
                     quizData = parsedJson.questions;
                     if (quizData && quizData.length > 0) {
                         startQuiz();
@@ -310,6 +361,30 @@
                 alert(`Failed to generate quiz. ${error.message}. Please try a clearer image.`);
                 resetApp();
             }
+        }
+        
+        async function makeApiCall(payload) {
+             let response;
+             let retries = 3;
+             let delay = 1000;
+             for (let i = 0; i < retries; i++) {
+                 response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(payload)
+                 });
+                 if (response.ok) break;
+                 console.warn(`Request failed with status ${response.status}. Retrying in ${delay}ms...`);
+                 await new Promise(res => setTimeout(res, delay));
+                 delay *= 2;
+             }
+
+             if (!response.ok) {
+                 throw new Error(`API request failed with status ${response.status}`);
+             }
+             
+             const result = await response.json();
+             return result.candidates?.[0]?.content?.parts?.[0]?.text;
         }
 
         function startQuiz() {
@@ -396,6 +471,7 @@
             multiImagePreviewContainer.innerHTML = '';
             multiImagePreviewContainer.classList.add('hidden');
             multiImagePreviewContainer.classList.remove('flex');
+            assignmentFeedbackContainer.textContent = '';
 
             quizOptions.classList.add('hidden');
             uploadPrompt.classList.remove('hidden');
@@ -404,6 +480,7 @@
             questionCountSelect.value = '10';
 
             resultsState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
             loadingState.classList.add('hidden');
             quizState.classList.add('hidden');
             uploadState.classList.remove('hidden');
