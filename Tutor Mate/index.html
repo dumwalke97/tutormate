@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutor Mate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* Switched to a standard system font for better compatibility */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .quiz-option.correct {
+            background-color: #22c55e !important; /* green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* green-600 */
+        }
+        .quiz-option.incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* red-600 */
+        }
+        /* Simple fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        /* Thumbnail styling */
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb; /* gray-200 */
+        }
+        .dark .thumbnail {
+             border: 2px solid #4b5563; /* gray-600 */
+        }
+        /* Style for assignment feedback */
+        #assignment-feedback-container {
+            white-space: pre-wrap; /* Allows text to wrap and respects newlines */
+            text-align: left;
+            background-color: #f9fafb; /* gray-50 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .dark #assignment-feedback-container {
+            background-color: #1f2937; /* gray-800 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md mx-auto">
+        <div id="main-container" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500">
+
+            <!-- Initial Upload State -->
+            <div id="upload-state">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Tutor Mate</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2">Snap pictures of a worksheet to begin.</p>
+                </div>
+
+                <div id="multi-image-preview-container" class="mt-6 p-2 w-full bg-gray-100 dark:bg-gray-700 rounded-lg flex-wrap gap-3 justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 hidden">
+                    <!-- Thumbnails will be added here -->
+                </div>
+                
+                <div class="mt-6 text-center" id="upload-prompt">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Upload files or use your camera</p>
+                </div>
+
+                <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
+                
+                <label for="image-upload" id="upload-button" class="mt-6 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer transition-all">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Add Photos</span>
+                </label>
+                
+                <div id="quiz-options" class="hidden mt-4 space-y-4">
+                    <div>
+                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions (for Quiz):</label>
+                        <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option>5</option>
+                            <option selected>10</option>
+                            <option>15</option>
+                            <option>20</option>
+                            <option>25</option>
+                            <option>30</option>
+                        </select>
+                    </div>
+
+                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
+                        Generate Quiz
+                    </button>
+                     <button id="check-assignment-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
+                        Check Assignment
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="text-center p-8 hidden">
+                <div role="status">
+                    <svg aria-hidden="true" class="inline w-10 h-10 text-gray-200 animate-spin dark:text-gray-600 fill-indigo-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0492C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+                    </svg>
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <h2 id="loading-text" class="text-xl font-semibold mt-4">Generating Quiz...</h2>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">Please wait a moment.</p>
+            </div>
+
+            <!-- Quiz State -->
+            <div id="quiz-state" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Quiz Time!</h2>
+                    <p id="progress-text" class="text-sm font-medium text-gray-500 dark:text-gray-400"></p>
+                </div>
+                <div id="question-container" class="fade-in">
+                    <p id="question-text" class="text-lg font-semibold mb-4"></p>
+                    <div id="options-container" class="grid grid-cols-1 gap-3">
+                        <!-- Options will be dynamically inserted here -->
+                    </div>
+                </div>
+                <p id="feedback-text" class="mt-4 font-semibold text-center"></p>
+                <button id="next-question-btn" class="mt-6 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hidden">
+                    Next Question
+                </button>
+            </div>
+
+            <!-- Quiz Results State -->
+            <div id="results-state" class="text-center p-8 hidden fade-in">
+                <h2 class="text-2xl font-bold">Quiz Complete!</h2>
+                <p id="score-text" class="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-4"></p>
+                <p id="score-message" class="text-gray-500 dark:text-gray-400"></p>
+                <button id="quiz-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    Start Over
+                </button>
+            </div>
+            
+            <!-- Assignment Results State -->
+            <div id="assignment-results-state" class="p-4 hidden fade-in">
+                <h2 class="text-2xl font-bold text-center mb-4">Assignment Feedback</h2>
+                <div id="assignment-feedback-container" class="border dark:border-gray-600"></div>
+                <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    Start Over
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const uploadState = document.getElementById('upload-state');
+        const loadingState = document.getElementById('loading-state');
+        const quizState = document.getElementById('quiz-state');
+        const resultsState = document.getElementById('results-state');
+        const assignmentResultsState = document.getElementById('assignment-results-state');
+
+        const imageUpload = document.getElementById('image-upload');
+        const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
+        const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
+        const generateQuizBtn = document.getElementById('generate-quiz-btn');
+        const checkAssignmentBtn = document.getElementById('check-assignment-btn');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const quizOptions = document.getElementById('quiz-options');
+        const questionCountSelect = document.getElementById('question-count');
+        const loadingText = document.getElementById('loading-text');
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackText = document.getElementById('feedback-text');
+        const nextQuestionBtn = document.getElementById('next-question-btn');
+        const progressText = document.getElementById('progress-text');
+        
+        const scoreText = document.getElementById('score-text');
+        const scoreMessage = document.getElementById('score-message');
+        const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
+        
+        const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
+        const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
+
+        // App State
+        let imageDataArray = [];
+        let quizData = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        
+        // The API key is REMOVED from the client-side code for security.
+        // It now lives in the Netlify environment variables.
+
+        // Event Listeners
+        imageUpload.addEventListener('change', handleImageUpload);
+        generateQuizBtn.addEventListener('click', generateQuiz);
+        checkAssignmentBtn.addEventListener('click', checkAssignment);
+        nextQuestionBtn.addEventListener('click', showNextQuestion);
+        quizStartOverBtn.addEventListener('click', resetApp);
+        assignmentStartOverBtn.addEventListener('click', resetApp);
+
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imageDataArray.push(e.target.result.split(',')[1]); 
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.classList.add('thumbnail');
+                    multiImagePreviewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            multiImagePreviewContainer.classList.remove('hidden');
+            multiImagePreviewContainer.classList.add('flex');
+            quizOptions.classList.remove('hidden');
+            uploadPrompt.classList.add('hidden');
+            uploadButtonLabel.textContent = 'Add More Photos';
+        }
+        
+        function commonApiSetup() {
+             if (imageDataArray.length === 0) {
+                alert('Please upload one or more images first.');
+                return false;
+            }
+            // API key check is removed from here
+            uploadState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            return true;
+        }
+        
+        async function checkAssignment() {
+            if (!commonApiSetup()) return;
+            loadingText.textContent = "Checking Assignment...";
+            
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question on the worksheet, provide the correct answer followed by a clear, easy-to-understand explanation. If the student's answer is visible and incorrect, gently point out the mistake in your explanation. The goal is to help the student learn the underlying concepts.
+
+Format your response clearly. Respond only in plain text. Do not use any special formatting characters like Markdown or LaTeX (e.g., avoid using '$', '#', or '*').`;
+
+            const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
+            
+            const parts = [ { text: userPrompt } ];
+            imageDataArray.forEach(data => {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: data
+                    }
+                });
+            });
+
+            const payload = {
+                contents: [{ parts: parts }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+            
+            try {
+                // Call our secure Netlify function
+                const responseText = await makeApiCall(payload);
+                if (responseText) {
+                    assignmentFeedbackContainer.textContent = responseText;
+                    loadingState.classList.add('hidden');
+                    assignmentResultsState.classList.remove('hidden');
+                } else {
+                    throw new Error("The AI could not provide feedback for this assignment.");
+                }
+            } catch (error) {
+                console.error("Error checking assignment:", error);
+                alert(`Failed to check assignment. ${error.message}. Please try again.`);
+                resetApp();
+            }
+        }
+
+        async function generateQuiz() {
+            if (!commonApiSetup()) return;
+            loadingText.textContent = "Generating Quiz...";
+            
+            const questionCount = questionCountSelect.value;
+
+            const systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
+            {
+              "questions": [
+                {
+                  "question": "The new, similar question text.",
+                  "options": ["Option A", "Option B", "Option C", "Option D"],
+                  "answer": "The correct option's text"
+                }
+              ]
+            }
+            Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary.`;
+
+            const userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
+            
+            const parts = [ { text: userPrompt } ];
+            imageDataArray.forEach(data => {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: data
+                    }
+                });
+            });
+
+            const payload = {
+                contents: [{ parts: parts }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "questions": {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: { "question": { "type": "STRING" }, "options": { "type": "ARRAY", "items": { "type": "STRING" }}, "answer": { "type": "STRING" }},
+                                    required: ["question", "options", "answer"]
+                                }
+                            }
+                        },
+                        required: ["questions"]
+                    }
+                }
+            };
+            
+            try {
+                // Call our secure Netlify function
+                const responseText = await makeApiCall(payload);
+                if (responseText) {
+                    const parsedJson = JSON.parse(responseText);
+                    quizData = parsedJson.questions;
+                    if (quizData && quizData.length > 0) {
+                        startQuiz();
+                    } else {
+                        throw new Error("The AI could not generate a quiz from this image.");
+                    }
+                } else {
+                     throw new Error("Invalid response structure from API.");
+                }
+
+            } catch (error) {
+                console.error("Error generating quiz:", error);
+                alert(`Failed to generate quiz. ${error.message}. Please try a clearer image.`);
+                resetApp();
+            }
+        }
+        
+        async function makeApiCall(payload) {
+             let response;
+             let retries = 3;
+             let delay = 1000;
+             for (let i = 0; i < retries; i++) {
+                 // The URL is now our Netlify Function endpoint
+                 response = await fetch(`/.netlify/functions/generate`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(payload)
+                 });
+                 if (response.ok) break;
+                 console.warn(`Request failed with status ${response.status}. Retrying in ${delay}ms...`);
+                 await new Promise(res => setTimeout(res, delay));
+                 delay *= 2;
+             }
+
+             if (!response.ok) {
+                 const errorBody = await response.json();
+                 console.error("API call failed:", errorBody);
+                 throw new Error(errorBody.error || `API request failed with status ${response.status}`);
+            }
+             
+             const result = await response.json();
+             // The structure of the response from our function matches Gemini's
+             return result.candidates?.[0]?.content?.parts?.[0]?.text;
+        }
+
+        function startQuiz() {
+            loadingState.classList.add('hidden');
+            quizState.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            optionsContainer.innerHTML = '';
+            feedbackText.textContent = '';
+            nextQuestionBtn.classList.add('hidden');
+            
+            const question = quizData[currentQuestionIndex];
+            questionText.textContent = question.question;
+            progressText.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('quiz-option', 'w-full', 'p-3', 'rounded-lg', 'border-2', 'border-gray-300', 'dark:border-gray-600', 'text-left', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'transition-colors', 'duration-200');
+                button.addEventListener('click', () => handleAnswer(button, option, question.answer));
+                optionsContainer.appendChild(button);
+            });
+             document.getElementById('question-container').classList.remove('fade-in');
+             void document.getElementById('question-container').offsetWidth; // Trigger reflow
+             document.getElementById('question-container').classList.add('fade-in');
+        }
+
+        function handleAnswer(button, selectedOption, correctAnswer) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            if (selectedOption === correctAnswer) {
+                score++;
+                button.classList.add('correct');
+                feedbackText.textContent = "Correct!";
+                feedbackText.className = 'mt-4 font-semibold text-center text-green-500';
+            } else {
+                button.classList.add('incorrect');
+                feedbackText.textContent = `Incorrect. The correct answer was: ${correctAnswer}`;
+                feedbackText.className = 'mt-4 font-semibold text-center text-red-500';
+                buttons.forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizState.classList.add('hidden');
+            resultsState.classList.remove('hidden');
+            scoreText.textContent = `${score} / ${quizData.length}`;
+            const percentage = (score / quizData.length) * 100;
+            if (percentage >= 80) {
+                scoreMessage.textContent = "Great job! You aced it!";
+            } else if (percentage >= 50) {
+                scoreMessage.textContent = "Good effort! Keep practicing.";
+            } else {
+                scoreMessage.textContent = "Don't worry, try again!";
+            }
+        }
+        
+        function resetApp() {
+            imageDataArray = [];
+            quizData = [];
+            currentQuestionIndex = 0;
+            score = 0;
+
+            multiImagePreviewContainer.innerHTML = '';
+            multiImagePreviewContainer.classList.add('hidden');
+            multiImagePreviewContainer.classList.remove('flex');
+            assignmentFeedbackContainer.textContent = '';
+
+            quizOptions.classList.add('hidden');
+            uploadPrompt.classList.remove('hidden');
+            uploadButtonLabel.textContent = 'Add Photos';
+            imageUpload.value = ''; 
+            questionCountSelect.value = '10';
+
+            resultsState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            uploadState.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
+
