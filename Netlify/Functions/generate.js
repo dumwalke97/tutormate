@@ -1,4 +1,4 @@
-// This file is updated with the correct authentication header for Vertex AI
+// This file is updated to use the correct "Gemini API" (generativelanguage) endpoint.
 
 export default async (req, context) => {
   if (req.method !== 'POST') {
@@ -8,33 +8,32 @@ export default async (req, context) => {
   try {
     // 1. Get the secret variables from Netlify
     const apiKey = process.env.GEMINI_API_KEY;
-    const projectId = process.env.GEMINI_PROJECT_ID;
-    const region = process.env.GEMINI_PROJECT_REGION || 'us-central1';
 
-    if (!apiKey || !projectId) {
-      return new Response(JSON.stringify({ error: 'API key or Project ID is not configured on server.' }), { status: 500 });
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'API key is not configured on server.' }), { status: 500 });
     }
 
     // 2. Get the payload from the client (index.html)
     const payload = await req.json();
 
-    // 3. Construct the Vertex AI URL
+    // 3. Construct the correct Gemini API URL
+    // This is the simple, correct URL for the API you enabled.
+    // It does not use project ID or region.
     const model = 'gemini-2.5-flash-preview-09-2025'; 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:generateContent`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-    // 4. Call the Vertex AI API
-    const geminiResponse = await fetch(`${apiUrl}?key=${apiKey}`, { // Corrected: API key as query param
+    // 4. Call the Gemini API
+    const geminiResponse = await fetch(`${apiUrl}?key=${apiKey}`, { // API key as query param
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // 'Authorization' header removed
       },
       body: JSON.stringify(payload),
     });
 
     if (!geminiResponse.ok) {
       const errorBody = await geminiResponse.json(); // Use .json() to get the error details
-      console.error('Vertex AI API Error:', errorBody);
+      console.error('Gemini API Error:', errorBody);
       // Pass the specific error message from the API back to the client
       const errorMessage = errorBody.error?.message || `API request failed with status ${geminiResponse.status}`;
       throw new Error(errorMessage);
