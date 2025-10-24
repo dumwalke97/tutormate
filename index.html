@@ -195,7 +195,9 @@
         let quizData = [];
         let currentQuestionIndex = 0;
         let score = 0;
-        let apiKey = "AIzaSyDiB4yBPIKh-la5kwbaT809KbaavLNfBuI";
+        
+        // The API key is REMOVED from the client-side code for security.
+        // It now lives in the Netlify environment variables.
 
         // Event Listeners
         imageUpload.addEventListener('change', handleImageUpload);
@@ -234,10 +236,7 @@
                 alert('Please upload one or more images first.');
                 return false;
             }
-            if (apiKey === "") {
-                alert("API Key is missing. Please add your Gemini API key to the script.");
-                return false;
-            }
+            // API key check is removed from here
             uploadState.classList.add('hidden');
             loadingState.classList.remove('hidden');
             return true;
@@ -271,6 +270,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             };
             
             try {
+                // Call our secure Netlify function
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
                     assignmentFeedbackContainer.textContent = responseText;
@@ -341,6 +341,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             };
             
             try {
+                // Call our secure Netlify function
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
                     const parsedJson = JSON.parse(responseText);
@@ -366,7 +367,8 @@ Format your response clearly. Respond only in plain text. Do not use any special
              let retries = 3;
              let delay = 1000;
              for (let i = 0; i < retries; i++) {
-                 response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                 // The URL is now our Netlify Function endpoint
+                 response = await fetch(`/.netlify/functions/generate`, {
                      method: 'POST',
                      headers: { 'Content-Type': 'application/json' },
                      body: JSON.stringify(payload)
@@ -378,10 +380,13 @@ Format your response clearly. Respond only in plain text. Do not use any special
              }
 
              if (!response.ok) {
-                 throw new Error(`API request failed with status ${response.status}`);
-             }
+                 const errorBody = await response.json();
+                 console.error("API call failed:", errorBody);
+                 throw new Error(errorBody.error || `API request failed with status ${response.status}`);
+            }
              
              const result = await response.json();
+             // The structure of the response from our function matches Gemini's
              return result.candidates?.[0]?.content?.parts?.[0]?.text;
         }
 
