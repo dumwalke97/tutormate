@@ -31,31 +31,33 @@ export default async (req, context) => {
     // 4. Authenticate using the service account to get an access token
     const auth = new GoogleAuth({
       credentials: JSON.parse(serviceAccountKey),
-      scopes: 'https://www.googleapis.com/auth/cloud-platform',
+      scopes: 'https://www.googleapis.com/auth/cloud-platform'
     });
-    const accessToken = await auth.getAccessToken();
+    const client = await auth.getClient();
 
-    // 5. Call the Gemini API with the access token
-    const geminiResponse = await fetch(apiUrl, {
+    // 5. Call the Gemini API using the authenticated client
+    // The google-auth-library's client automatically handles the Authorization header and parses the JSON response.
+    const geminiResponse = await client.request({
+      url: apiUrl,
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(geminiPayload),
     });
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.json(); // Use .json() to get the error details
-      console.error('Gemini API Error:', errorBody);
+    // The response object from client.request() is different from a standard fetch response.
+    // The status is in geminiResponse.status and the data is in geminiResponse.data.
+    if (geminiResponse.status !== 200) {
+      console.error('Gemini API Error:', geminiResponse.data);
       // Pass the specific error message from the API back to the client
-      const errorMessage = errorBody.error?.message || `API request failed with status ${geminiResponse.status}`;
+      const errorMessage = geminiResponse.data.error?.message || `API request failed with status ${geminiResponse.status}`;
       throw new Error(errorMessage);
     }
 
     // 6. Send the successful response back to index.html
-    const data = await geminiResponse.json();
-    return new Response(JSON.stringify(data), {
+    // The data is already a parsed JSON object in geminiResponse.data
+    return new Response(JSON.stringify(geminiResponse.data), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
