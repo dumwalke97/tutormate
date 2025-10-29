@@ -271,7 +271,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             try {
                 // Call our secure Netlify function
-                const responseText = await makeApiCall({ model: 'gemini-1.5-pro-latest', geminiPayload: payload });
+                const responseText = await makeApiCall(payload);
                 if (responseText) {
                     assignmentFeedbackContainer.textContent = responseText;
                     loadingState.classList.add('hidden');
@@ -342,7 +342,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             try {
                 // Call our secure Netlify function
-                const responseText = await makeApiCall({ model: 'gemini-1.5-flash-latest', geminiPayload: payload });
+                const responseText = await makeApiCall(payload);
                 if (responseText) {
                     const parsedJson = JSON.parse(responseText);
                     quizData = parsedJson.questions;
@@ -380,22 +380,14 @@ Format your response clearly. Respond only in plain text. Do not use any special
              }
 
              if (!response.ok) {
-                // Safely handle error responses that might not be JSON
-                let errorMessage = `API request failed with status ${response.status}`;
-                try {
-                    const errorBody = await response.json();
-                    console.error("API call failed:", errorBody);
-                    errorMessage = errorBody.error || errorMessage;
-                } catch (e) {
-                    // The error response was not JSON, use the status text instead.
-                    console.error("Could not parse error response as JSON.");
-                }
-                throw new Error(errorMessage);
-             }
+                 const errorBody = await response.json();
+                 console.error("API call failed:", errorBody);
+                 throw new Error(errorBody.error || `API request failed with status ${response.status}`);
+            }
              
              const result = await response.json();
-             // The structure of the response from our function is now a simple { text: "..." }
-             return result.text;
+             // The structure of the response from our function matches Gemini's
+             return result.candidates?.[0]?.content?.parts?.[0]?.text;
         }
 
         function startQuiz() {
@@ -499,3 +491,4 @@ Format your response clearly. Respond only in plain text. Do not use any special
     </script>
 </body>
 </html>
+
