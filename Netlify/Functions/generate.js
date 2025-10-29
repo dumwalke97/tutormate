@@ -7,10 +7,13 @@ export default async (req, context) => {
 
   try {
     // 1. Get the secret variables from Netlify
-    const apiKey = process.env.GEMINI_API_KEY;
+    // 1. Get the secret variables from Netlify environment
+    const apiKey = process.env.GEMINI_API_KEY; // Your Gemini API Key
+    const projectId = process.env.GEMINI_PROJECT_ID; // Your Google Cloud Project ID
+    const region = process.env.GEMINI_PROJECT_REGION; // Your Google Cloud Region
 
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'API key is not configured on server.' }), { status: 500 });
+    if (!apiKey || !projectId || !region) {
+      return new Response(JSON.stringify({ error: 'API key, Project ID, or Region is not configured on server.' }), { status: 500 });
     }
 
     // 2. Get the payload from the client (index.html)
@@ -21,14 +24,16 @@ export default async (req, context) => {
     }
 
     // 3. Construct the correct Gemini API URL
-    // The model is now dynamically provided by the client.
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    // The latest models use the aiplatform endpoint, which requires project ID and region.
+    const apiUrl = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:streamGenerateContent`;
 
     // 4. Call the Gemini API
-    const geminiResponse = await fetch(`${apiUrl}?key=${apiKey}`, { // API key as query param
+    // The API key is now passed as an Authorization header for this endpoint.
+    const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify(geminiPayload),
     });
