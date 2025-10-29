@@ -271,7 +271,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             try {
                 // Call our secure Netlify function
-                const responseText = await makeApiCall(payload);
+                const responseText = await makeApiCall({ model: 'gemini-2.5-pro-preview-09-2025', geminiPayload: payload });
                 if (responseText) {
                     assignmentFeedbackContainer.textContent = responseText;
                     loadingState.classList.add('hidden');
@@ -342,7 +342,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             try {
                 // Call our secure Netlify function
-                const responseText = await makeApiCall(payload);
+                const responseText = await makeApiCall({ model: 'gemini-2.5-flash-preview-09-2025', geminiPayload: payload });
                 if (responseText) {
                     const parsedJson = JSON.parse(responseText);
                     quizData = parsedJson.questions;
@@ -491,4 +491,3 @@ Format your response clearly. Respond only in plain text. Do not use any special
     </script>
 </body>
 </html>
-

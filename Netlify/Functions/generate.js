@@ -14,12 +14,14 @@ export default async (req, context) => {
     }
 
     // 2. Get the payload from the client (index.html)
-    const payload = await req.json();
+    const { model, geminiPayload } = await req.json();
+
+    if (!model || !geminiPayload) {
+      return new Response(JSON.stringify({ error: 'Request body must include "model" and "geminiPayload".' }), { status: 400 });
+    }
 
     // 3. Construct the correct Gemini API URL
-    // This is the simple, correct URL for the API you enabled.
-    // It does not use project ID or region.
-    const model = 'gemini-2.5-flash-preview-09-2025'; 
+    // The model is now dynamically provided by the client.
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     // 4. Call the Gemini API
@@ -28,7 +30,7 @@ export default async (req, context) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(geminiPayload),
     });
 
     if (!geminiResponse.ok) {
@@ -51,4 +53,3 @@ export default async (req, context) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 };
-
