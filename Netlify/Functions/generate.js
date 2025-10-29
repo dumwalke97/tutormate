@@ -26,7 +26,7 @@ export default async (req, context) => {
 
     // 3. Construct the correct Gemini API URL
     // The latest models use the aiplatform endpoint, which requires project ID and region.
-    const apiUrl = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:streamGenerateContent`;
+    const apiUrl = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:generateContent`;
 
     // 4. Authenticate using the service account to get an access token
     const auth = new GoogleAuth({
