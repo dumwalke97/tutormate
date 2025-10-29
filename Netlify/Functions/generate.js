@@ -1,4 +1,6 @@
 // This file is updated to use the correct "Gemini API" (generativelanguage) endpoint.
+import { GoogleAuth } from 'google-auth-library';
+
 
 export default async (req, context) => {
   if (req.method !== 'POST') {
@@ -7,13 +9,12 @@ export default async (req, context) => {
 
   try {
     // 1. Get the secret variables from Netlify
-    // 1. Get the secret variables from Netlify environment
-    const apiKey = process.env.GEMINI_API_KEY; // Your Gemini API Key
+    const serviceAccountKey = process.env.GCP_SERVICE_ACCOUNT_KEY;
     const projectId = process.env.GEMINI_PROJECT_ID; // Your Google Cloud Project ID
     const region = process.env.GEMINI_PROJECT_REGION; // Your Google Cloud Region
 
-    if (!apiKey || !projectId || !region) {
-      return new Response(JSON.stringify({ error: 'API key, Project ID, or Region is not configured on server.' }), { status: 500 });
+    if (!serviceAccountKey || !projectId || !region) {
+      return new Response(JSON.stringify({ error: 'Service Account, Project ID, or Region is not configured on server.' }), { status: 500 });
     }
 
     // 2. Get the payload from the client (index.html)
@@ -27,13 +28,19 @@ export default async (req, context) => {
     // The latest models use the aiplatform endpoint, which requires project ID and region.
     const apiUrl = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:streamGenerateContent`;
 
-    // 4. Call the Gemini API
-    // The API key is now passed as an Authorization header for this endpoint.
+    // 4. Authenticate using the service account to get an access token
+    const auth = new GoogleAuth({
+      credentials: JSON.parse(serviceAccountKey),
+      scopes: 'https://www.googleapis.com/auth/cloud-platform',
+    });
+    const accessToken = await auth.getAccessToken();
+
+    // 5. Call the Gemini API with the access token
     const geminiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify(geminiPayload),
     });
@@ -46,7 +53,7 @@ export default async (req, context) => {
       throw new Error(errorMessage);
     }
 
-    // 5. Send the successful response back to index.html
+    // 6. Send the successful response back to index.html
     const data = await geminiResponse.json();
     return new Response(JSON.stringify(data), {
       status: 200,
