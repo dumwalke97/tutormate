@@ -28,9 +28,17 @@ export default async (req, context) => {
     // The latest models use the aiplatform endpoint, which requires project ID and region.
     const apiUrl = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/${model}:generateContent`;
 
-    // 4. Authenticate using the service account to get an access token
+    // 4. Safely parse credentials and authenticate
+    let credentials;
+    try {
+      credentials = JSON.parse(serviceAccountKey);
+    } catch (e) {
+      console.error("Failed to parse GCP_SERVICE_ACCOUNT_KEY. Ensure it's a valid JSON string.", e);
+      throw new Error("Server configuration error: Invalid service account key format.");
+    }
+
     const auth = new GoogleAuth({
-      credentials: JSON.parse(serviceAccountKey),
+      credentials,
       scopes: 'https://www.googleapis.com/auth/cloud-platform'
     });
     const client = await auth.getClient();
