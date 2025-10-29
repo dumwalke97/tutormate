@@ -63,9 +63,16 @@ export default async (req, context) => {
       throw new Error(errorMessage);
     }
 
-    // 6. Send the successful response back to index.html
-    // The data is already a parsed JSON object in geminiResponse.data
-    return new Response(JSON.stringify(geminiResponse.data), {
+    // 6. Extract the relevant text content and send it back to index.html
+    const responseData = geminiResponse.data;
+    const extractedText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!extractedText) {
+      console.error('Gemini API response did not contain expected text content:', responseData);
+      throw new Error('Gemini API response was empty or malformed.');
+    }
+
+    return new Response(JSON.stringify({ text: extractedText }), { // Return a simple object with the text
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

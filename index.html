@@ -394,8 +394,8 @@ Format your response clearly. Respond only in plain text. Do not use any special
              }
              
              const result = await response.json();
-             // The structure of the response from our function matches Gemini's
-             return result.candidates?.[0]?.content?.parts?.[0]?.text;
+             // The structure of the response from our function is now a simple { text: "..." }
+             return result.text;
         }
 
         function startQuiz() {
