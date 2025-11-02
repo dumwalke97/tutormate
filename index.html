@@ -219,10 +219,6 @@
             loadingState.classList.remove('hidden');
             loadingText.textContent = "Processing Images...";
 
-            // Reset arrays before processing new files
-            imageDataArray = [];
-            multiImagePreviewContainer.innerHTML = '';
-
             const filePromises = Array.from(files).map(file => resizeImage(file, 1024, 0.9));
 
             Promise.all(filePromises).then(processedImages => {
