@@ -211,14 +211,18 @@
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
+            // Clear previous images when new ones are selected
+            imageDataArray = [];
+            multiImagePreviewContainer.innerHTML = '';
+
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // More robustly find and extract the Base64 part of the data URL.
-                    // This handles cases where the data URL might have extra metadata before the comma,
-                    // which can happen with images from mobile photo libraries.
-                    const base64String = e.target.result.split(',').pop();
-                    imageDataArray.push(base64String);
+                    const dataUrl = e.target.result;
+                    // Extract mimeType and base64 data from the data URL
+                    const match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
+                    if (!match) return; // Skip if format is not as expected
+                    imageDataArray.push({ mimeType: match[1], data: match[2] });
 
                     const img = document.createElement('img');
                     img.src = e.target.result;
@@ -258,12 +262,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: data
-                    }
-                });
+                parts.push({ inlineData: data });
             });
 
             const payload = {
@@ -304,9 +303,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({
-                    inlineData: { mimeType: "image/jpeg", data: data }
-                });
+                parts.push({ inlineData: data });
             });
 
             const payload = {
