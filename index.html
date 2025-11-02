@@ -297,58 +297,36 @@ Format your response clearly. Respond only in plain text. Do not use any special
             const questionCount = questionCountSelect.value;
 
             const systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
-            {
-              "questions": [
-                {
-                  "question": "The new, similar question text.",
-                  "options": ["Option A", "Option B", "Option C", "Option D"],
-                  "answer": "The correct option's text"
-                }
-              ]
-            }
-            Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary.`;
+{"questions": [{"question": "...", "options": ["...", "..."], "answer": "..."}]}.
+Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. Respond ONLY with the JSON object and nothing else.`;
 
             const userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
                 parts.push({
-                    inlineData: {
-                        mimeType: "image/jpeg",
-                        data: data
-                    }
+                    inlineData: { mimeType: "image/jpeg", data: data }
                 });
             });
 
             const payload = {
                 contents: [{ parts: parts }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            "questions": {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: { "question": { "type": "STRING" }, "options": { "type": "ARRAY", "items": { "type": "STRING" }}, "answer": { "type": "STRING" }},
-                                    required: ["question", "options", "answer"]
-                                }
-                            }
-                        },
-                        required: ["questions"]
-                    }
-                }
+                systemInstruction: { parts: [{ text: systemPrompt }] }
             };
             
             try {
                 // Call our secure Netlify function
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
-                    const parsedJson = JSON.parse(responseText);
+                    // The model might return the JSON wrapped in markdown or with extra text.
+                    // We need to extract the raw JSON string before parsing.
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        console.error("Raw response from API:", responseText);
+                        throw new Error("The AI response did not contain a valid JSON object.");
+                    }
+                    const jsonString = jsonMatch[0];
+                    const parsedJson = JSON.parse(jsonString);
                     quizData = parsedJson.questions;
                     if (quizData && quizData.length > 0) {
                         startQuiz();
