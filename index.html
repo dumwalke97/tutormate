@@ -214,8 +214,12 @@
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    imageDataArray.push(e.target.result.split(',')[1]); 
-                    
+                    // More robustly find and extract the Base64 part of the data URL.
+                    // This handles cases where the data URL might have extra metadata before the comma,
+                    // which can happen with images from mobile photo libraries.
+                    const base64String = e.target.result.split(',').pop();
+                    imageDataArray.push(base64String);
+
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.classList.add('thumbnail');
@@ -491,4 +495,3 @@ Format your response clearly. Respond only in plain text. Do not use any special
     </script>
 </body>
 </html>
-
