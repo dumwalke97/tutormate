@@ -20,6 +20,15 @@
             color: white !important;
             border-color: #dc2626 !important; /* red-600 */
         }
+        /* Styles for the review section to avoid overriding icon colors */
+        #review-container .correct {
+            background-color: #dcfce7; /* green-100 */
+            border: 1px solid #22c55e; /* green-500 */
+        }
+        #review-container .incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border: 1px solid #ef4444; /* red-500 */
+        }
         /* Simple fade-in animation */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -129,14 +138,11 @@
 
             <!-- Loading State -->
             <div id="loading-state" class="text-center p-8 hidden">
-                <div role="status">
-                    <svg aria-hidden="true" class="inline w-10 h-10 text-gray-200 animate-spin dark:text-gray-600 fill-indigo-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
-                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0492C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
-                    </svg>
-                    <span class="sr-only">Loading...</span>
+                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 mb-2">
+                    <div id="progress-bar" class="bg-indigo-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <h2 id="loading-text" class="text-xl font-semibold mt-4">Generating Quiz...</h2>
+                <p id="progress-bar-text" class="text-sm font-semibold text-gray-600 dark:text-gray-400">0%</p>
+                <h2 id="loading-text" class="text-xl font-semibold mt-6">Generating Quiz...</h2>
                 <p class="text-gray-500 dark:text-gray-400 mt-1">Please wait a moment.</p>
             </div>
 
@@ -166,11 +172,14 @@
                 <h2 class="text-2xl font-bold">Quiz Complete!</h2>
                 <p id="score-text" class="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-4"></p>
                 <p id="score-message" class="text-gray-500 dark:text-gray-400"></p>
-                <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="review-answers-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        Review Answers
+                    </button>
                     <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
                         Retake Quiz
                     </button>
-                    <button id="quiz-start-over-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-500 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-500 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
                         Start Over
                     </button>
                 </div>
@@ -185,6 +194,18 @@
                 </button>
             </div>
 
+            <!-- Review State -->
+            <div id="review-state" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Review Answers</h2>
+                    <button id="back-to-results-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                        Back to Results
+                    </button>
+                </div>
+                <div id="review-container" class="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Reviewed questions will be dynamically inserted here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -194,6 +215,8 @@
         const loadingState = document.getElementById('loading-state');
         const quizState = document.getElementById('quiz-state');
         const resultsState = document.getElementById('results-state');
+        const reviewState = document.getElementById('review-state');
+        const reviewContainer = document.getElementById('review-container');
         const assignmentResultsState = document.getElementById('assignment-results-state');
 
         const imageUpload = document.getElementById('image-upload');
@@ -205,6 +228,8 @@
         const quizOptions = document.getElementById('quiz-options');
         const questionCountSelect = document.getElementById('question-count');
         const loadingText = document.getElementById('loading-text');
+        const progressBar = document.getElementById('progress-bar');
+        const progressBarText = document.getElementById('progress-bar-text');
         
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -217,6 +242,8 @@
         const scoreMessage = document.getElementById('score-message');
         const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
         const retakeQuizBtn = document.getElementById('retake-quiz-btn');
+        const reviewAnswersBtn = document.getElementById('review-answers-btn');
+        const backToResultsBtn = document.getElementById('back-to-results-btn');
         
         const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
         const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
@@ -227,6 +254,7 @@
         let userAnswers = []; // To store the user's answers
         let currentQuestionIndex = 0;
         let score = 0;
+        let progressInterval = null;
         
         // The API key is REMOVED from the client-side code for security.
         // It now lives in the Netlify environment variables.
@@ -239,6 +267,8 @@
         prevQuestionBtn.addEventListener('click', showPreviousQuestion);
         quizStartOverBtn.addEventListener('click', resetApp);
         retakeQuizBtn.addEventListener('click', retakeQuiz);
+        reviewAnswersBtn.addEventListener('click', showReview);
+        backToResultsBtn.addEventListener('click', showResults);
         assignmentStartOverBtn.addEventListener('click', resetApp);
 
         function handleImageUpload(event) {
@@ -325,6 +355,7 @@
             // API key check is removed from here
             uploadState.classList.add('hidden');
             loadingState.classList.remove('hidden');
+            startProgressBar();
             return true;
         }
         
@@ -355,6 +386,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
                     assignmentFeedbackContainer.textContent = responseText;
+                    completeProgressBar();
                     loadingState.classList.add('hidden');
                     assignmentResultsState.classList.remove('hidden');
                 } else {
@@ -409,6 +441,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
                     const parsedJson = JSON.parse(jsonString);
                     quizData = parsedJson.questions;
                     if (quizData && quizData.length > 0) {
+                        completeProgressBar();
                         startQuiz();
                     } else {
                         throw new Error("The AI could not generate a quiz from this image.");
@@ -435,6 +468,35 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             currentQuestionIndex = 0;
             score = 0;
             generateQuiz(previousQuizData); // Call generateQuiz with the old questions
+        }
+
+        function startProgressBar() {
+            clearInterval(progressInterval); // Clear any existing interval
+            let progress = 0;
+            progressBar.style.width = '0%';
+            progressBarText.textContent = '0%';
+
+            progressInterval = setInterval(() => {
+                // This logic makes the bar move fast at the start and slow down near the end
+                if (progress < 60) {
+                    progress += Math.random() * 5;
+                } else if (progress < 90) {
+                    progress += Math.random() * 2;
+                } else if (progress < 99) {
+                    progress += 0.1;
+                }
+                
+                progress = Math.min(progress, 99); // Cap at 99% until complete
+                progressBar.style.width = `${progress}%`;
+                progressBarText.textContent = `${Math.floor(progress)}%`;
+            }, 200);
+        }
+
+        function completeProgressBar() {
+            clearInterval(progressInterval);
+            progressInterval = null;
+            progressBar.style.width = '100%';
+            progressBarText.textContent = '100%';
         }
         
         async function makeApiCall(payload) {
@@ -561,6 +623,51 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             }
         }
 
+        function showReview() {
+            resultsState.classList.add('hidden');
+            reviewState.classList.remove('hidden');
+            reviewContainer.innerHTML = ''; // Clear previous review
+
+            quizData.forEach((question, index) => {
+                const userAnswer = userAnswers[index] || "Not Answered"; // Handle case where a question might not be answered
+                const correctAnswer = question.answer;
+                const isCorrect = userAnswer === correctAnswer;
+
+                const questionWrapper = document.createElement('div');
+                questionWrapper.className = 'p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg shadow-sm';
+
+                const questionTitle = document.createElement('p');
+                questionTitle.className = 'font-semibold mb-3';
+                questionTitle.textContent = `Q${index + 1}: ${question.question}`;
+                questionWrapper.appendChild(questionTitle);
+
+                const userAnswerDiv = document.createElement('div');
+                userAnswerDiv.className = 'p-2 rounded-md text-sm flex items-center'; // Use flexbox for alignment
+
+                let iconHtml = '';
+
+                if (isCorrect) {
+                    userAnswerDiv.classList.add('correct'); // This class is now styled differently in the review container
+                    iconHtml = `<svg class="w-5 h-5 mr-2 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+                } else {
+                    userAnswerDiv.classList.add('incorrect'); // This class is now styled differently in the review container
+                    iconHtml = `<svg class="w-5 h-5 mr-2 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                }
+                
+                userAnswerDiv.innerHTML = `${iconHtml}<div><span class="font-bold">Your Answer:</span> ${userAnswer}</div>`;
+                questionWrapper.appendChild(userAnswerDiv);
+
+                if (!isCorrect) {
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'p-2 rounded-md text-sm mt-2 correct'; // This uses the new 'correct' style
+                    correctAnswerDiv.innerHTML = `<span class="font-bold">Correct Answer:</span> ${correctAnswer}`;
+                    questionWrapper.appendChild(correctAnswerDiv);
+                }
+
+                reviewContainer.appendChild(questionWrapper);
+            });
+        }
+
         function showResults() {
             quizState.classList.add('hidden');
             resultsState.classList.remove('hidden');
@@ -573,6 +680,8 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             } else {
                 scoreMessage.textContent = "Don't worry, try again!";
             }
+            // Also ensure review state is hidden if we come back to results
+            reviewState.classList.add('hidden');
         }
         
         function resetApp() {
@@ -581,6 +690,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             userAnswers = [];
             currentQuestionIndex = 0;
             score = 0;
+            clearInterval(progressInterval);
 
             multiImagePreviewContainer.innerHTML = '';
             multiImagePreviewContainer.classList.add('hidden');
@@ -595,6 +705,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
 
             resultsState.classList.add('hidden');
             assignmentResultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
             loadingState.classList.add('hidden');
             quizState.classList.add('hidden');
             uploadState.classList.remove('hidden');
