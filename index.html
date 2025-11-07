@@ -126,7 +126,7 @@
                 <div class="space-y-4">
                      <div>
                         <label for="custom-prompt" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Create a quiz from a topic:</label>
-                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
+                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-2 border-gray-500 dark:bg-gray-700 dark:border-gray-400 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
                     </div>
                     <div>
                         <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions:</label>
@@ -424,8 +424,8 @@ Format your response clearly. Respond only in plain text. Do not use any special
             const questionCount = questionCountSelect.value;
 
             let systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
-{"questions": [{"question": "...", "options": ["...", "..."], "answer": "..."}]}.
-Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.`;
+{"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
+IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.`;
 
             let userPrompt = promptText ? promptText : `Analyze the concepts in the following image(s).`;
             userPrompt += ` Generate a practice quiz with ${questionCount} questions.`;
@@ -685,6 +685,9 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
 
                 reviewContainer.appendChild(questionWrapper);
             });
+
+            // Scroll the review container to the top
+            reviewContainer.scrollTop = 0;
         }
 
         function showResults() {
