@@ -39,6 +39,27 @@
         .dark .thumbnail {
              border: 2px solid #4b5563; /* gray-600 */
         }
+        .thumbnail-container {
+            position: relative;
+            display: inline-block;
+        }
+        .delete-btn {
+            position: absolute;
+            top: -12px;  /* Adjusted position for new size */
+            right: -12px; /* Adjusted position for new size */
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-radius: 9999px; /* full */
+            width: 32px;  /* Increased size for easier tapping */
+            height: 32px; /* Increased size for easier tapping */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            cursor: pointer;
+            line-height: 1;
+        }
         /* Style for assignment feedback */
         #assignment-feedback-container {
             white-space: pre-wrap; /* Allows text to wrap and respects newlines */
@@ -121,8 +142,11 @@
 
             <!-- Quiz State -->
             <div id="quiz-state" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Quiz Time!</h2>
+                <div class="relative flex justify-between items-center mb-4">
+                    <button id="prev-question-btn" class="absolute left-0 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h2 class="text-xl font-bold text-center w-full">Quiz Time!</h2>
                     <p id="progress-text" class="text-sm font-medium text-gray-500 dark:text-gray-400"></p>
                 </div>
                 <div id="question-container" class="fade-in">
@@ -142,9 +166,14 @@
                 <h2 class="text-2xl font-bold">Quiz Complete!</h2>
                 <p id="score-text" class="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-4"></p>
                 <p id="score-message" class="text-gray-500 dark:text-gray-400"></p>
-                <button id="quiz-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
-                    Start Over
-                </button>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                    <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                        Retake Quiz
+                    </button>
+                    <button id="quiz-start-over-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-500 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        Start Over
+                    </button>
+                </div>
             </div>
             
             <!-- Assignment Results State -->
@@ -181,11 +210,13 @@
         const optionsContainer = document.getElementById('options-container');
         const feedbackText = document.getElementById('feedback-text');
         const nextQuestionBtn = document.getElementById('next-question-btn');
+        const prevQuestionBtn = document.getElementById('prev-question-btn');
         const progressText = document.getElementById('progress-text');
         
         const scoreText = document.getElementById('score-text');
         const scoreMessage = document.getElementById('score-message');
         const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
+        const retakeQuizBtn = document.getElementById('retake-quiz-btn');
         
         const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
         const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
@@ -193,6 +224,7 @@
         // App State
         let imageDataArray = [];
         let quizData = [];
+        let userAnswers = []; // To store the user's answers
         let currentQuestionIndex = 0;
         let score = 0;
         
@@ -204,7 +236,9 @@
         generateQuizBtn.addEventListener('click', generateQuiz);
         checkAssignmentBtn.addEventListener('click', checkAssignment);
         nextQuestionBtn.addEventListener('click', showNextQuestion);
+        prevQuestionBtn.addEventListener('click', showPreviousQuestion);
         quizStartOverBtn.addEventListener('click', resetApp);
+        retakeQuizBtn.addEventListener('click', retakeQuiz);
         assignmentStartOverBtn.addEventListener('click', resetApp);
 
         function handleImageUpload(event) {
@@ -223,13 +257,28 @@
 
             Promise.all(filePromises).then(processedImages => {
                 processedImages.forEach(imgData => {
-                    if (imgData) {
-                        imageDataArray.push(imgData.apiData);
+                    if (imgData) { // imgData is { thumbnailSrc, apiData, id }
+                        imageDataArray.push(imgData);
 
+                        // Create container for thumbnail and delete button
+                        const thumbContainer = document.createElement('div');
+                        thumbContainer.classList.add('thumbnail-container');
+                        thumbContainer.dataset.imageId = imgData.id;
+
+                        // Create image thumbnail
                         const img = document.createElement('img');
                         img.src = imgData.thumbnailSrc;
                         img.classList.add('thumbnail');
-                        multiImagePreviewContainer.appendChild(img);
+                        thumbContainer.appendChild(img);
+
+                        // Create delete button
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.innerHTML = '&times;'; // 'x' character
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.onclick = () => removeImage(imgData.id);
+                        thumbContainer.appendChild(deleteBtn);
+
+                        multiImagePreviewContainer.appendChild(thumbContainer);
                     }
                 });
 
@@ -248,6 +297,24 @@
                 alert("There was an error processing your images. Please try again.");
                 resetApp();
             });
+        }
+
+        function removeImage(imageId) {
+            // Remove from state
+            imageDataArray = imageDataArray.filter(img => img.id !== imageId);
+
+            // Remove from DOM
+            const thumbToRemove = multiImagePreviewContainer.querySelector(`[data-image-id="${imageId}"]`);
+            if (thumbToRemove) {
+                thumbToRemove.remove();
+            }
+
+            // If no images are left, revert to initial upload state
+            if (imageDataArray.length === 0) {
+                quizOptions.classList.add('hidden');
+                uploadPrompt.classList.remove('hidden');
+                uploadButtonLabel.textContent = 'Add Photos';
+            }
         }
 
         function commonApiSetup() {
@@ -273,7 +340,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({ inlineData: data });
+                parts.push({ inlineData: data.apiData });
             });
 
             const payload = {
@@ -300,21 +367,26 @@ Format your response clearly. Respond only in plain text. Do not use any special
             }
         }
 
-        async function generateQuiz() {
+        async function generateQuiz(previousQuestions = null) {
             if (!commonApiSetup()) return;
             loadingText.textContent = "Generating Quiz...";
             
             const questionCount = questionCountSelect.value;
 
-            const systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
+            let systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
 {"questions": [{"question": "...", "options": ["...", "..."], "answer": "..."}]}.
 Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. Respond ONLY with the JSON object and nothing else.`;
 
-            const userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
+            let userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
+
+            if (previousQuestions && previousQuestions.length > 0) {
+                const oldQuestionsString = JSON.stringify(previousQuestions.map(q => q.question));
+                userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions. IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
+            }
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({ inlineData: data });
+                parts.push({ inlineData: data.apiData });
             });
 
             const payload = {
@@ -350,6 +422,19 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
                 alert(`Failed to generate quiz. ${error.message}. Please try a clearer image.`);
                 resetApp();
             }
+        }
+        
+        function retakeQuiz() {
+            // Hide the results screen before generating the new quiz
+            resultsState.classList.add('hidden');
+
+            // Keep imageDataArray, but clear quiz-specific state
+            const previousQuizData = [...quizData]; // Keep a copy of the old questions
+            quizData = [];
+            userAnswers = [];
+            currentQuestionIndex = 0;
+            score = 0;
+            generateQuiz(previousQuizData); // Call generateQuiz with the old questions
         }
         
         async function makeApiCall(payload) {
@@ -389,30 +474,58 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
         }
 
         function displayQuestion() {
+            // Clear previous state
             optionsContainer.innerHTML = '';
             feedbackText.textContent = '';
-            nextQuestionBtn.classList.add('hidden');
-            
+
             const question = quizData[currentQuestionIndex];
+            const userAnswer = userAnswers[currentQuestionIndex];
+
             questionText.textContent = question.question;
             progressText.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+
+            // Update button visibility
+            prevQuestionBtn.classList.toggle('hidden', currentQuestionIndex === 0);
+            nextQuestionBtn.textContent = (currentQuestionIndex === quizData.length - 1) ? 'Finish Quiz' : 'Next Question';
 
             question.options.forEach(option => {
                 const button = document.createElement('button');
                 button.textContent = option;
                 button.classList.add('quiz-option', 'w-full', 'p-3', 'rounded-lg', 'border-2', 'border-gray-300', 'dark:border-gray-600', 'text-left', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'transition-colors', 'duration-200');
-                button.addEventListener('click', () => handleAnswer(button, option, question.answer));
+                
+                if (userAnswer !== undefined) { // If question has been answered
+                    button.disabled = true;
+                    if (option === question.answer) {
+                        button.classList.add('correct');
+                    }
+                    if (option === userAnswer && userAnswer !== question.answer) {
+                        button.classList.add('incorrect');
+                    }
+                } else { // New question
+                    button.addEventListener('click', () => handleAnswer(button, option, question.answer));
+                }
                 optionsContainer.appendChild(button);
             });
-             document.getElementById('question-container').classList.remove('fade-in');
-             void document.getElementById('question-container').offsetWidth; // Trigger reflow
-             document.getElementById('question-container').classList.add('fade-in');
+
+            if (userAnswer !== undefined) {
+                feedbackText.textContent = userAnswer === question.answer ? "Correct!" : `Incorrect. The correct answer was: ${question.answer}`;
+                feedbackText.className = `mt-4 font-semibold text-center ${userAnswer === question.answer ? 'text-green-500' : 'text-red-500'}`;
+                nextQuestionBtn.classList.remove('hidden');
+            } else {
+                nextQuestionBtn.classList.add('hidden');
+            }
+
+            document.getElementById('question-container').classList.remove('fade-in');
+            void document.getElementById('question-container').offsetWidth; // Trigger reflow
+            document.getElementById('question-container').classList.add('fade-in');
         }
 
         function handleAnswer(button, selectedOption, correctAnswer) {
             const buttons = optionsContainer.querySelectorAll('button');
             buttons.forEach(btn => btn.disabled = true);
             
+            userAnswers[currentQuestionIndex] = selectedOption; // Store the answer
+
             if (selectedOption === correctAnswer) {
                 score++;
                 button.classList.add('correct');
@@ -441,6 +554,13 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             }
         }
 
+        function showPreviousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
         function showResults() {
             quizState.classList.add('hidden');
             resultsState.classList.remove('hidden');
@@ -458,6 +578,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
         function resetApp() {
             imageDataArray = [];
             quizData = [];
+            userAnswers = [];
             currentQuestionIndex = 0;
             score = 0;
 
@@ -466,7 +587,7 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             multiImagePreviewContainer.classList.remove('flex');
             assignmentFeedbackContainer.textContent = '';
 
-            quizOptions.classList.add('hidden');
+            quizOptions.classList.add('hidden'); // This gets re-shown if images remain
             uploadPrompt.classList.remove('hidden');
             uploadButtonLabel.textContent = 'Add Photos';
             imageUpload.value = ''; 
@@ -512,7 +633,13 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
                         const match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
                         if (!match) return resolve(null);
-                        resolve({ thumbnailSrc: dataUrl, apiData: { mimeType: match[1], data: match[2] } });
+                        
+                        const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+                        resolve({ 
+                            thumbnailSrc: dataUrl, 
+                            apiData: { mimeType: match[1], data: match[2] },
+                            id: uniqueId });
                     };
                     img.onerror = reject;
                     img.src = e.target.result;
