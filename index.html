@@ -93,7 +93,7 @@
             <div id="upload-state">
                 <div class="text-center">
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Tutor Mate</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-2">Snap pictures of a worksheet to begin.</p>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2">Upload a worksheet to get started.</p>
                 </div>
 
                 <div id="multi-image-preview-container" class="mt-6 p-2 w-full bg-gray-100 dark:bg-gray-700 rounded-lg flex-wrap gap-3 justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 hidden">
@@ -113,10 +113,23 @@
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     <span>Add Photos</span>
                 </label>
+
+                <button id="check-assignment-btn" class="hidden mt-4 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                    Check Assignment
+                </button>
+
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-gray-300 dark:border-gray-600"></div></div>
+                    <div class="relative flex justify-center"><span class="bg-white dark:bg-gray-800 px-2 text-sm text-gray-500 dark:text-gray-400">Or</span></div>
+                </div>
                 
-                <div id="quiz-options" class="hidden mt-4 space-y-4">
+                <div class="space-y-4">
+                     <div>
+                        <label for="custom-prompt" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Create a quiz from a topic:</label>
+                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
+                    </div>
                     <div>
-                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions (for Quiz):</label>
+                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions:</label>
                         <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option>5</option>
                             <option selected>10</option>
@@ -127,11 +140,8 @@
                         </select>
                     </div>
 
-                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
+                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
                         Generate Quiz
-                    </button>
-                     <button id="check-assignment-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all">
-                        Check Assignment
                     </button>
                 </div>
             </div>
@@ -225,11 +235,11 @@
         const generateQuizBtn = document.getElementById('generate-quiz-btn');
         const checkAssignmentBtn = document.getElementById('check-assignment-btn');
         const uploadPrompt = document.getElementById('upload-prompt');
-        const quizOptions = document.getElementById('quiz-options');
         const questionCountSelect = document.getElementById('question-count');
         const loadingText = document.getElementById('loading-text');
         const progressBar = document.getElementById('progress-bar');
         const progressBarText = document.getElementById('progress-bar-text');
+        const customPrompt = document.getElementById('custom-prompt');
         
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -318,7 +328,7 @@
 
                 multiImagePreviewContainer.classList.remove('hidden');
                 multiImagePreviewContainer.classList.add('flex');
-                quizOptions.classList.remove('hidden');
+                checkAssignmentBtn.classList.remove('hidden');
                 uploadPrompt.classList.add('hidden');
                 uploadButtonLabel.textContent = 'Add More Photos';
 
@@ -341,7 +351,7 @@
 
             // If no images are left, revert to initial upload state
             if (imageDataArray.length === 0) {
-                quizOptions.classList.add('hidden');
+                checkAssignmentBtn.classList.add('hidden');
                 uploadPrompt.classList.remove('hidden');
                 uploadButtonLabel.textContent = 'Add Photos';
             }
@@ -400,20 +410,29 @@ Format your response clearly. Respond only in plain text. Do not use any special
         }
 
         async function generateQuiz(previousQuestions = null) {
-            if (!commonApiSetup()) return;
+            const promptText = customPrompt.value.trim();
+            if (imageDataArray.length === 0 && !promptText) {
+                alert('Please upload an image or type a quiz topic to begin.');
+                return;
+            }
+
+            uploadState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            startProgressBar();
             loadingText.textContent = "Generating Quiz...";
             
             const questionCount = questionCountSelect.value;
 
             let systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
 {"questions": [{"question": "...", "options": ["...", "..."], "answer": "..."}]}.
-Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. Respond ONLY with the JSON object and nothing else.`;
+Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.`;
 
-            let userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions.`;
+            let userPrompt = promptText ? promptText : `Analyze the concepts in the following image(s).`;
+            userPrompt += ` Generate a practice quiz with ${questionCount} questions.`;
 
             if (previousQuestions && previousQuestions.length > 0) {
                 const oldQuestionsString = JSON.stringify(previousQuestions.map(q => q.question));
-                userPrompt = `Analyze the concepts in the following image(s) and generate a new practice quiz with ${questionCount} questions. IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
+                userPrompt += ` IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
             }
             
             const parts = [ { text: userPrompt } ];
@@ -697,11 +716,12 @@ Ensure the 'answer' field exactly matches one of the strings in the 'options' ar
             multiImagePreviewContainer.classList.remove('flex');
             assignmentFeedbackContainer.textContent = '';
 
-            quizOptions.classList.add('hidden'); // This gets re-shown if images remain
+            checkAssignmentBtn.classList.add('hidden');
             uploadPrompt.classList.remove('hidden');
             uploadButtonLabel.textContent = 'Add Photos';
             imageUpload.value = ''; 
             questionCountSelect.value = '10';
+            customPrompt.value = '';
 
             resultsState.classList.add('hidden');
             assignmentResultsState.classList.add('hidden');
