@@ -5,10 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutor Mate</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             /* Switched to a standard system font for better compatibility */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .font-playfair { /* Renamed to font-title for clarity, but keeping original for diff */
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800; /* ExtraBold */
         }
         .quiz-option.correct {
             background-color: #22c55e !important; /* green-500 */
@@ -46,7 +53,7 @@
             border: 2px solid #e5e7eb; /* gray-200 */
         }
         .dark .thumbnail {
-             border: 2px solid #4b5563; /* gray-600 */
+             border: 2px solid #475569; /* slate-600 */
         }
         .thumbnail-container {
             position: relative;
@@ -57,7 +64,7 @@
             top: -12px;  /* Adjusted position for new size */
             right: -12px; /* Adjusted position for new size */
             background-color: #ef4444; /* red-500 */
-            color: white;
+            color: white; 
             border-radius: 9999px; /* full */
             width: 32px;  /* Increased size for easier tapping */
             height: 32px; /* Increased size for easier tapping */
@@ -67,70 +74,74 @@
             justify-content: center;
             border: 2px solid white;
             cursor: pointer;
-            line-height: 1;
+            line-height: 1; 
+            transition: background-color 0.2s ease-in-out;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626; /* red-600 */
         }
         /* Style for assignment feedback */
         #assignment-feedback-container {
             white-space: pre-wrap; /* Allows text to wrap and respects newlines */
             text-align: left;
-            background-color: #f9fafb; /* gray-50 */
+            background-color: #f8fafc; /* slate-50 */
             border-radius: 0.5rem;
             padding: 1rem;
             max-height: 50vh;
             overflow-y: auto;
         }
         .dark #assignment-feedback-container {
-            background-color: #1f2937; /* gray-800 */
+            background-color: #1e293b; /* slate-800 */
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex items-center justify-center min-h-screen p-4">
+<body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-md mx-auto">
-        <div id="main-container" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500">
+        <div id="main-container" class="bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500">
 
             <!-- Initial Upload State -->
             <div id="upload-state">
                 <div class="text-center">
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Tutor Mate</h1>
-                    <p class="text-gray-500 dark:text-gray-400 mt-2">Upload a worksheet to get started.</p>
+                    <h1 class="text-4xl font-bold text-indigo-800 dark:text-sky-300 font-playfair">Tutor Mate</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-2">Upload a worksheet to get started.</p>
                 </div>
 
-                <div id="multi-image-preview-container" class="mt-6 p-2 w-full bg-gray-100 dark:bg-gray-700 rounded-lg flex-wrap gap-3 justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 hidden">
+                <div id="multi-image-preview-container" class="mt-6 p-2 w-full bg-white dark:bg-slate-700 rounded-lg flex-wrap gap-3 justify-center border-2 border-dashed border-slate-400 dark:border-slate-600 hidden">
                     <!-- Thumbnails will be added here -->
                 </div>
                 
                 <div class="mt-6 text-center" id="upload-prompt">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.33-2.33 3 3 0 013.75 5.25" />
                     </svg>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Upload files or use your camera</p>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Upload files or use your camera</p>
                 </div>
 
                 <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
                 
-                <label for="image-upload" id="upload-button" class="mt-6 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer transition-all">
+                <label for="image-upload" id="upload-button" class="mt-6 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span>Add Photos</span>
+                    <span>Add Images/Files</span>
                 </label>
 
-                <button id="check-assignment-btn" class="hidden mt-4 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                <button id="check-assignment-btn" class="hidden mt-4 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                     Check Assignment
                 </button>
 
                 <div class="relative my-6">
-                    <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-gray-300 dark:border-gray-600"></div></div>
-                    <div class="relative flex justify-center"><span class="bg-white dark:bg-gray-800 px-2 text-sm text-gray-500 dark:text-gray-400">Or</span></div>
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-slate-300 dark:border-slate-600"></div></div>
+                    <div class="relative flex justify-center"><span class="bg-slate-200 dark:bg-slate-800 px-2 text-sm text-slate-500 dark:text-slate-400">Or</span></div>
                 </div>
                 
                 <div class="space-y-4">
                      <div>
-                        <label for="custom-prompt" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Create a quiz from a topic:</label>
-                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-2 border-gray-500 dark:bg-gray-700 dark:border-gray-400 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
+                        <label for="custom-prompt" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Create a quiz from a topic:</label>
+                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-2 border-slate-400 dark:bg-slate-700 dark:border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
                     </div>
                     <div>
-                        <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Number of Questions:</label>
-                        <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <label for="question-count" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Number of Questions:</label>
+                        <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
                             <option>5</option>
                             <option selected>10</option>
                             <option>15</option>
@@ -140,7 +151,7 @@
                         </select>
                     </div>
 
-                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Generate Quiz
                     </button>
                 </div>
@@ -148,22 +159,22 @@
 
             <!-- Loading State -->
             <div id="loading-state" class="text-center p-8 hidden">
-                <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 mb-2">
-                    <div id="progress-bar" class="bg-indigo-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div class="w-full bg-slate-300 rounded-full h-4 dark:bg-slate-700 mb-2">
+                    <div id="progress-bar" class="bg-sky-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <p id="progress-bar-text" class="text-sm font-semibold text-gray-600 dark:text-gray-400">0%</p>
+                <p id="progress-bar-text" class="text-sm font-semibold text-slate-600 dark:text-slate-400">0%</p>
                 <h2 id="loading-text" class="text-xl font-semibold mt-6">Generating Quiz...</h2>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">Please wait a moment.</p>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Please wait a moment.</p>
             </div>
 
             <!-- Quiz State -->
             <div id="quiz-state" class="hidden">
                 <div class="relative flex justify-between items-center mb-4">
-                    <button id="prev-question-btn" class="absolute left-0 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden">
+                    <button id="prev-question-btn" class="absolute left-0 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors hidden">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     <h2 class="text-xl font-bold text-center w-full">Quiz Time!</h2>
-                    <p id="progress-text" class="text-sm font-medium text-gray-500 dark:text-gray-400"></p>
+                    <p id="progress-text" class="text-sm font-medium text-slate-500 dark:text-slate-400"></p>
                 </div>
                 <div id="question-container" class="fade-in">
                     <p id="question-text" class="text-lg font-semibold mb-4"></p>
@@ -172,7 +183,7 @@
                     </div>
                 </div>
                 <p id="feedback-text" class="mt-4 font-semibold text-center"></p>
-                <button id="next-question-btn" class="mt-6 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hidden">
+                <button id="next-question-btn" class="mt-6 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hidden">
                     Next Question
                 </button>
             </div>
@@ -180,16 +191,16 @@
             <!-- Quiz Results State -->
             <div id="results-state" class="text-center p-8 hidden fade-in">
                 <h2 class="text-2xl font-bold">Quiz Complete!</h2>
-                <p id="score-text" class="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 my-4"></p>
-                <p id="score-message" class="text-gray-500 dark:text-gray-400"></p>
+                <p id="score-text" class="text-4xl font-extrabold text-sky-500 dark:text-sky-400 my-4"></p>
+                <p id="score-message" class="text-slate-500 dark:text-slate-400"></p>
                 <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button id="review-answers-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    <button id="review-answers-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Review Answers
                     </button>
-                    <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
+                    <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Retake Quiz
                     </button>
-                    <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-500 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                    <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
                         Start Over
                     </button>
                 </div>
@@ -198,8 +209,8 @@
             <!-- Assignment Results State -->
             <div id="assignment-results-state" class="p-4 hidden fade-in">
                 <h2 class="text-2xl font-bold text-center mb-4">Assignment Feedback</h2>
-                <div id="assignment-feedback-container" class="border dark:border-gray-600"></div>
-                <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                <div id="assignment-feedback-container" class="border dark:border-slate-600"></div>
+                <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                     Start Over
                 </button>
             </div>
@@ -208,7 +219,7 @@
             <div id="review-state" class="hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold">Review Answers</h2>
-                    <button id="back-to-results-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                    <button id="back-to-results-btn" class="px-4 py-2 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
                         Back to Results
                     </button>
                 </div>
@@ -313,7 +324,8 @@
 
                         // Create delete button
                         const deleteBtn = document.createElement('button');
-                        deleteBtn.innerHTML = '&times;'; // 'x' character
+                        // Use a modern SVG 'X' icon
+                        deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>`;
                         deleteBtn.classList.add('delete-btn');
                         deleteBtn.onclick = () => removeImage(imgData.id);
                         thumbContainer.appendChild(deleteBtn);
@@ -329,7 +341,7 @@
                 multiImagePreviewContainer.classList.remove('hidden');
                 multiImagePreviewContainer.classList.add('flex');
                 checkAssignmentBtn.classList.remove('hidden');
-                uploadPrompt.classList.add('hidden');
+                uploadPrompt.classList.add('hidden'); // This hides the initial prompt
                 uploadButtonLabel.textContent = 'Add More Photos';
 
             }).catch(error => {
@@ -572,7 +584,7 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
             question.options.forEach(option => {
                 const button = document.createElement('button');
                 button.textContent = option;
-                button.classList.add('quiz-option', 'w-full', 'p-3', 'rounded-lg', 'border-2', 'border-gray-300', 'dark:border-gray-600', 'text-left', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'transition-colors', 'duration-200');
+                button.classList.add('quiz-option', 'w-full', 'p-3', 'rounded-lg', 'border-2', 'border-slate-400', 'dark:border-slate-600', 'text-left', 'hover:bg-slate-100', 'dark:hover:bg-slate-700', 'transition-colors', 'duration-200');
                 
                 if (userAnswer !== undefined) { // If question has been answered
                     button.disabled = true;
@@ -653,7 +665,7 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
                 const isCorrect = userAnswer === correctAnswer;
 
                 const questionWrapper = document.createElement('div');
-                questionWrapper.className = 'p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg shadow-sm';
+                questionWrapper.className = 'p-4 bg-white dark:bg-slate-700/50 rounded-lg shadow-sm';
 
                 const questionTitle = document.createElement('p');
                 questionTitle.className = 'font-semibold mb-3';
