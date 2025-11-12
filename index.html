@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutor Mate</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added for Markdown parsing -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -92,6 +93,36 @@
         }
         .dark #assignment-feedback-container {
             background-color: #1e293b; /* slate-800 */
+        }
+        /* Styles for formatted assignment feedback */
+        #assignment-feedback-container ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #assignment-feedback-container li {
+            background-color: #f1f5f9; /* slate-100 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .dark #assignment-feedback-container li {
+            background-color: #334155; /* slate-700 */
+            border-color: #475569; /* slate-600 */
+        }
+        /* Reduce spacing inside the feedback cards */
+        #assignment-feedback-container li p {
+            margin-bottom: 0; /* Set to 0 to eliminate extra spacing between paragraphs */
+        }
+        #assignment-feedback-container li p:last-child {
+            margin-bottom: 0;
+        }
+        /* Styles for student's answer text color */
+        .answer-correct {
+            color: #22c55e; /* green-500 */
+        }
+        .answer-incorrect {
+            color: #ef4444; /* red-500 */
         }
     </style>
 </head>
@@ -385,9 +416,18 @@
             if (!commonApiSetup()) return;
             loadingText.textContent = "Checking Assignment...";
             
-            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question on the worksheet, provide the correct answer followed by a clear, easy-to-understand explanation. If the student's answer is visible and incorrect, gently point out the mistake in your explanation. The goal is to help the student learn the underlying concepts.
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question on the worksheet, provide a detailed analysis.
 
-Format your response clearly. Respond only in plain text. Do not use any special formatting characters like Markdown or LaTeX (e.g., avoid using '$', '#', or '*').`;
+Format your response using Markdown. For each question, create a single list item that contains the question, the student's visible answer, the correct answer, and an explanation. Use the following structure:
+
+- **Question [Number]:** (Describe the problem)
+- **Question [Number]:**\n(Describe the problem)
+  **Student's Answer:** (Carefully identify the student's written answer from the image. If the student's answer is not clearly visible or not applicable, state "Not visible" or "Not applicable".)
+  **Correct Answer:** (State the actual correct answer clearly)
+  **Explanation:** (Provide a clear, step-by-step, easy-to-understand explanation. If the student's answer was incorrect, gently explain why and how to arrive at the correct answer. Ensure the explanation implicitly clarifies if the student's answer was correct or incorrect by comparing it to the correct answer.)
+
+The goal is to help the student learn the underlying concepts. IMPORTANT: Do not use any special formatting characters for math, like '$'. Respond only with plain text and Markdown lists. Ensure your entire response is valid Markdown and starts with the first list item. Keep explanations concise and as a single block of text, using line breaks for readability within the explanation, but avoid blank lines that would create new paragraphs.
+`;
 
             const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
             
@@ -395,7 +435,7 @@ Format your response clearly. Respond only in plain text. Do not use any special
             imageDataArray.forEach(data => {
                 parts.push({ inlineData: data.apiData });
             });
-
+            
             const payload = {
                 contents: [{ parts: parts }],
                 systemInstruction: {
@@ -407,7 +447,63 @@ Format your response clearly. Respond only in plain text. Do not use any special
                 // Call our secure Netlify function
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
-                    assignmentFeedbackContainer.textContent = responseText;
+                    // Clean up any stray '$' characters and convert Markdown to HTML
+                    let cleanedText = responseText.replace(/\$/g, '');
+                    const rawHtmlContent = marked.parse(cleanedText);
+
+                    // Create a temporary div to parse the HTML string into a DOM structure
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = rawHtmlContent;
+
+                    // Iterate over each list item (each question's feedback)
+                    tempDiv.querySelectorAll('li').forEach(li => {
+                        let studentAnswerText = '';
+                        let correctAnswerText = '';
+                        let studentAnswerParagraph = null;
+
+                        // Find the paragraphs containing "Student's Answer:" and "Correct Answer:"
+                        li.querySelectorAll('p').forEach(p => {
+                            const strongTag = p.querySelector('strong');
+                            if (strongTag) {
+                                if (strongTag.textContent.includes("Student's Answer:")) {
+                                    studentAnswerParagraph = p;
+                                    // Extract text after "Student's Answer:"
+                                    studentAnswerText = p.textContent.replace("Student's Answer:", '').trim();
+                                } else if (strongTag.textContent.includes("Correct Answer:")) {
+                                    // Extract text after "Correct Answer:"
+                                    correctAnswerText = p.textContent.replace("Correct Answer:", '').trim();
+                                }
+                            }
+                        });
+
+                        if (studentAnswerParagraph && studentAnswerText !== '' && correctAnswerText !== '' && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
+                            // Normalize text for robust comparison: convert to lowercase, remove extra spaces, trim
+                            const normalizedStudentAnswer = studentAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+                            const normalizedCorrectAnswer = correctAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+
+                            const isCorrect = normalizedStudentAnswer === normalizedCorrectAnswer;
+                            const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
+
+                            const strongStudentAnswerTag = studentAnswerParagraph.querySelector('strong');
+                            if (strongStudentAnswerTag) {
+                                // Create a span to wrap the answer text
+                                const answerSpan = document.createElement('span');
+                                answerSpan.className = answerClass;
+                                answerSpan.textContent = studentAnswerText; // Use the extracted text
+
+                                // Remove all nodes after the strong tag and append the new span
+                                let currentNode = strongStudentAnswerTag.nextSibling;
+                                while (currentNode) {
+                                    const next = currentNode.nextSibling;
+                                    studentAnswerParagraph.removeChild(currentNode);
+                                    currentNode = next;
+                                }
+                                studentAnswerParagraph.appendChild(answerSpan);
+                            }
+                        }
+                    });
+                    let htmlContent = tempDiv.innerHTML; // Get the modified HTML
+                    assignmentFeedbackContainer.innerHTML = htmlContent;
                     completeProgressBar();
                     loadingState.classList.add('hidden');
                     assignmentResultsState.classList.remove('hidden');
