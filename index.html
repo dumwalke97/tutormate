@@ -126,11 +126,24 @@
             color: #ef4444; /* red-500 */
         }
     </style>
+    <!-- Firebase SDKs will be loaded at the end of the body -->
 </head>
 <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex items-start md:items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-md mx-auto">
         <div id="main-container" class="bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500">
+
+            <!-- Auth Header Container -->
+            <div class="flex justify-end items-center mb-4">
+                <div id="anon-header" class="hidden">
+                    <a id="login-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-4">Log In</a>
+                    <span class="text-indigo-800 dark:text-indigo-400 font-medium ml-2">|</span>
+                    <a id="signup-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-2">Sign Up</a>
+                </div>
+                <div id="auth-header" class="hidden">
+                    <button id="signout-btn" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-4">Sign Out</button>
+                </div>
+            </div>
 
             <!-- Initial Upload State -->
             <div id="upload-state">
@@ -232,6 +245,9 @@
                     <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Retake Quiz
                     </button>
+                    <button id="save-quiz-btn" class="hidden w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        Save to My Folders
+                    </button>
                     <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
                         Start Over
                     </button>
@@ -244,6 +260,9 @@
                 <div id="assignment-feedback-container" class="border dark:border-slate-600"></div>
                 <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                     Start Over
+                </button>
+                <button id="save-assignment-btn" class="hidden mt-4 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    Save to My Folders
                 </button>
             </div>
 
@@ -262,8 +281,86 @@
         </div>
     </div>
 
-    <script>
-        // DOM Elements
+    <!-- Login/Signup Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 z-50 w-full max-w-md relative">
+            
+            <h2 class="text-2xl font-bold text-center mb-6 text-slate-800 dark:text-slate-200">Log In or Sign Up to Save</h2>
+
+            <!-- Google Login -->
+            <button id="google-login-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
+                <svg class="w-5 h-5 mr-3" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8S109.8 11.6 244 11.6c70.3 0 129.8 27.8 174.3 71.9l-64.4 64.4c-23.7-22.2-56.8-35.9-95.9-35.9-83.5 0-151.8 68.3-151.8 151.8s68.3 151.8 151.8 151.8c97.2 0 130.3-72.8 134.8-110.2H244v-75.8h244z"></path></svg>
+                Continue with Google
+            </button>
+
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-slate-300 dark:border-slate-600"></div></div>
+                <div class="relative flex justify-center"><span class="bg-white dark:bg-slate-800 px-2 text-sm text-slate-500 dark:text-slate-400">Or</span></div>
+            </div>
+
+            <!-- Tabs -->
+            <div>
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="signup-tab-btn" class="border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Sign Up</button>
+                        <button id="login-tab-btn" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Log In</button>
+                    </nav>
+                </div>
+
+                <!-- Sign Up Panel -->
+                <div id="signup-panel" class="space-y-4 mt-6">
+                    <input id="signup-email" type="email" placeholder="Email address" autocomplete="email" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <input id="signup-password" type="password" placeholder="Password" autocomplete="new-password" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <button id="email-signup-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700">Sign Up</button>
+                </div>
+
+                <!-- Log In Panel -->
+                <div id="login-panel" class="hidden space-y-4 mt-6">
+                    <input id="login-email" type="email" placeholder="Email address" autocomplete="email" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <button id="email-login-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700">Log In</button>
+                </div>
+            </div>
+
+            <!-- Cancel Button -->
+            <button id="cancel-login-btn" class="mt-6 w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { 
+            getAuth,
+            signInAnonymously,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgJqRy5tDlcu2ASzSlYOvYxuw6wqeqZIg",
+            authDomain: "tutor-mate-476113.firebaseapp.com",
+            projectId: "tutor-mate-476113",
+            storageBucket: "tutor-mate-476113.firebasestorage.app",
+            messagingSenderId: "803321539283",
+            appId: "1:803321539283:web:5ccf39fae159bee9eac226",
+            measurementId: "G-YFFVBLXD43"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        export const auth = getAuth(app);
+        export const db = getFirestore(app);
+        export const storage = getStorage(app);
+
+        // DOM Elements (now defined inside the module)
         const uploadState = document.getElementById('upload-state');
         const loadingState = document.getElementById('loading-state');
         const quizState = document.getElementById('quiz-state');
@@ -272,17 +369,9 @@
         const reviewContainer = document.getElementById('review-container');
         const assignmentResultsState = document.getElementById('assignment-results-state');
 
+        const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
         const imageUpload = document.getElementById('image-upload');
         const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
-        const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
-        const generateQuizBtn = document.getElementById('generate-quiz-btn');
-        const checkAssignmentBtn = document.getElementById('check-assignment-btn');
-        const uploadPrompt = document.getElementById('upload-prompt');
-        const questionCountSelect = document.getElementById('question-count');
-        const loadingText = document.getElementById('loading-text');
-        const progressBar = document.getElementById('progress-bar');
-        const progressBarText = document.getElementById('progress-bar-text');
-        const customPrompt = document.getElementById('custom-prompt');
         
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
@@ -300,6 +389,36 @@
         
         const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
         const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
+        const generateQuizBtn = document.getElementById('generate-quiz-btn');
+        const checkAssignmentBtn = document.getElementById('check-assignment-btn');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const questionCountSelect = document.getElementById('question-count');
+        const loadingText = document.getElementById('loading-text');
+        const progressBar = document.getElementById('progress-bar');
+        const progressBarText = document.getElementById('progress-bar-text');
+        const customPrompt = document.getElementById('custom-prompt');
+        const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+
+        // Auth & Modal Elements
+        const anonHeader = document.getElementById('anon-header');
+        const authHeader = document.getElementById('auth-header');
+        const signoutBtn = document.getElementById('signout-btn');
+        const loginLink = document.getElementById('login-link');
+        const signupLink = document.getElementById('signup-link');
+        const saveQuizBtn = document.getElementById('save-quiz-btn');
+        const loginModal = document.getElementById('login-modal');
+        const cancelLoginBtn = document.getElementById('cancel-login-btn');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const emailSignupBtn = document.getElementById('email-signup-btn');
+        const emailLoginBtn = document.getElementById('email-login-btn');
+        const signupEmail = document.getElementById('signup-email');
+        const signupPassword = document.getElementById('signup-password');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const signupTabBtn = document.getElementById('signup-tab-btn');
+        const loginTabBtn = document.getElementById('login-tab-btn');
+        const signupPanel = document.getElementById('signup-panel');
+        const loginPanel = document.getElementById('login-panel');
 
         // App State
         let imageDataArray = [];
@@ -307,6 +426,7 @@
         let userAnswers = []; // To store the user's answers
         let currentQuestionIndex = 0;
         let score = 0;
+        let currentUserId = null;
         let progressInterval = null;
         
         // The API key is REMOVED from the client-side code for security.
@@ -323,6 +443,127 @@
         reviewAnswersBtn.addEventListener('click', showReview);
         backToResultsBtn.addEventListener('click', showResults);
         assignmentStartOverBtn.addEventListener('click', resetApp);
+
+        // --- Auth & Modal Event Listeners ---
+
+        const showLoginModal = (defaultToLogin = true) => {
+            if (defaultToLogin) {
+                showLoginTab();
+            } else {
+                showSignupTab();
+            }
+            loginModal.classList.remove('hidden');
+        };
+        const hideLoginModal = () => loginModal.classList.add('hidden');
+
+        const showLoginTab = () => {
+            loginPanel.classList.remove('hidden');
+            signupPanel.classList.add('hidden');
+            loginTabBtn.className = 'border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+            signupTabBtn.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+        };
+
+        const showSignupTab = () => {
+            signupPanel.classList.remove('hidden');
+            loginPanel.classList.add('hidden');
+            signupTabBtn.className = 'border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+            loginTabBtn.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+        };
+
+        // Show modal when login/signup/save is clicked
+        loginLink.addEventListener('click', () => showLoginModal(true)); // Default to login
+        signupLink.addEventListener('click', () => showLoginModal(false)); // Default to signup
+        saveQuizBtn.addEventListener('click', showLoginModal);
+        saveAssignmentBtn.addEventListener('click', showLoginModal);
+
+        // Hide modal on cancel
+        cancelLoginBtn.addEventListener('click', hideLoginModal);
+
+        // Handle Sign Out
+        signoutBtn.addEventListener('click', () => {
+            signOut(auth).catch(error => {
+                console.error("Sign out error:", error);
+                alert("Failed to sign out. Please try again.");
+            });
+        });
+
+        // Handle Google Sign In
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    // const credential = GoogleAuthProvider.credentialFromResult(result);
+                    // const token = credential.accessToken;
+                    // const user = result.user;
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                }).catch((error) => {
+                    console.error("Google sign-in error:", error);
+                    alert(`Google sign-in failed: ${error.message}`);
+                });
+        });
+
+        // Handle Email/Password Sign Up
+        emailSignupBtn.addEventListener('click', () => {
+            const email = signupEmail.value;
+            const password = signupPassword.value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                })
+                .catch((error) => {
+                    alert(`Sign up failed: ${error.message}`);
+                });
+        });
+
+        // Handle Email/Password Log In
+        emailLoginBtn.addEventListener('click', () => {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                })
+                .catch((error) => {
+                    alert(`Log in failed: ${error.message}`);
+                });
+        });
+
+        // Handle Modal Tab Switching
+        signupTabBtn.addEventListener('click', () => {
+            showSignupTab();
+        });
+
+        loginTabBtn.addEventListener('click', () => {
+            showLoginTab();
+        });
+
+        // Firebase Auth State Listener
+        onAuthStateChanged(auth, user => {
+            const authHeader = document.getElementById('auth-header');
+            const anonHeader = document.getElementById('anon-header');
+
+            if (user && !user.isAnonymous) {
+                // Logged-in user
+                currentUserId = user.uid;
+                saveQuizBtn.classList.remove('hidden');
+                saveAssignmentBtn.classList.remove('hidden');
+                authHeader.classList.remove('hidden');
+                anonHeader.classList.add('hidden');
+            } else if (user && user.isAnonymous) {
+                // Anonymous user
+                currentUserId = user.uid;
+                anonHeader.classList.remove('hidden');
+                authHeader.classList.add('hidden');
+                saveQuizBtn.classList.add('hidden');
+                saveAssignmentBtn.classList.add('hidden');
+            } else {
+                // New visitor, sign them in anonymously
+                signInAnonymously(auth).catch(error => {
+                    console.error("Anonymous sign-in failed:", error);
+                });
+            }
+        });
 
         function handleImageUpload(event) {
             const files = event.target.files;
@@ -409,6 +650,7 @@
             // API key check is removed from here
             uploadState.classList.add('hidden');
             loadingState.classList.remove('hidden');
+            authHeader.parentElement.classList.add('hidden'); // Hide auth links
             startProgressBar();
             return true;
         }
@@ -507,13 +749,22 @@ The goal is to help the student learn the underlying concepts. IMPORTANT: Do not
                     assignmentFeedbackContainer.innerHTML = htmlContent;
                     completeProgressBar();
                     loadingState.classList.add('hidden');
+                    authHeader.parentElement.classList.remove('hidden'); // Show auth links
                     assignmentResultsState.classList.remove('hidden');
+
+                    // Show the save button only if the user is signed out (is anonymous) to prompt login
+                    if (auth.currentUser && auth.currentUser.isAnonymous) {
+                        saveAssignmentBtn.classList.remove('hidden');
+                    } else {
+                        saveAssignmentBtn.classList.add('hidden');
+                    }
                 } else {
                     throw new Error("The AI could not provide feedback for this assignment.");
                 }
             } catch (error) {
                 console.error("Error checking assignment:", error);
                 alert(`Failed to check assignment. ${error.message}. Please try again.`);
+                authHeader.parentElement.classList.remove('hidden'); // Show auth links on error
                 resetApp();
             }
         }
@@ -527,6 +778,7 @@ The goal is to help the student learn the underlying concepts. IMPORTANT: Do not
 
             uploadState.classList.add('hidden');
             loadingState.classList.remove('hidden');
+            authHeader.parentElement.classList.add('hidden'); // Hide auth links
             startProgressBar();
             loadingText.textContent = "Generating Quiz...";
             
@@ -570,6 +822,7 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
                     quizData = parsedJson.questions;
                     if (quizData && quizData.length > 0) {
                         completeProgressBar();
+                        // Don't show auth links yet, quiz is starting
                         startQuiz();
                     } else {
                         throw new Error("The AI could not generate a quiz from this image.");
@@ -581,6 +834,7 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
             } catch (error) {
                 console.error("Error generating quiz:", error);
                 alert(`Failed to generate quiz. ${error.message}. Please try a clearer image.`);
+                authHeader.parentElement.classList.remove('hidden'); // Show auth links on error
                 resetApp();
             }
         }
@@ -813,6 +1067,13 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
             }
             // Also ensure review state is hidden if we come back to results
             reviewState.classList.add('hidden');
+
+            // Show the save button only if the user is logged in (not anonymous)
+            if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                saveQuizBtn.classList.remove('hidden');
+            } else {
+                saveQuizBtn.classList.add('hidden');
+            }
         }
         
         function resetApp() {
@@ -841,10 +1102,9 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
             loadingState.classList.add('hidden');
             quizState.classList.add('hidden');
             uploadState.classList.remove('hidden');
+            authHeader.parentElement.classList.remove('hidden'); // Ensure auth links are visible on reset
         }
-    </script>
 
-    <script>
         // Image Resizing Utility
         function resizeImage(file, maxSize, quality) {
             return new Promise((resolve, reject) => {
@@ -891,6 +1151,7 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
                 reader.readAsDataURL(file);
             });
         }
+
     </script>
 </body>
 </html>
