@@ -342,86 +342,97 @@
             signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyDgJqRy5tDlcu2ASzSlYOvYxuw6wqeqZIg",
-            authDomain: "tutor-mate-476113.firebaseapp.com",
-            projectId: "tutor-mate-476113",
-            storageBucket: "tutor-mate-476113.firebasestorage.app",
-            messagingSenderId: "803321539283",
-            appId: "1:803321539283:web:5ccf39fae159bee9eac226",
-            measurementId: "G-YFFVBLXD43"
-        };
+        import { getStorage } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";        
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        export const auth = getAuth(app);
-        export const db = getFirestore(app);
-        export const storage = getStorage(app);
+        // --- App Initialization ---
+        let auth, db, storage;
 
-        // DOM Elements (now defined inside the module)
-        const uploadState = document.getElementById('upload-state');
-        const loadingState = document.getElementById('loading-state');
-        const quizState = document.getElementById('quiz-state');
-        const resultsState = document.getElementById('results-state');
-        const reviewState = document.getElementById('review-state');
-        const reviewContainer = document.getElementById('review-container');
-        const assignmentResultsState = document.getElementById('assignment-results-state');
+        async function initializeAppAndServices() {
+            // Fetch the configuration from our Netlify function
+            const response = await fetch('/.netlify/functions/config');
+            const config = await response.json();
 
-        const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
-        const imageUpload = document.getElementById('image-upload');
-        const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
-        
-        const questionText = document.getElementById('question-text');
-        const optionsContainer = document.getElementById('options-container');
-        const feedbackText = document.getElementById('feedback-text');
-        const nextQuestionBtn = document.getElementById('next-question-btn');
-        const prevQuestionBtn = document.getElementById('prev-question-btn');
-        const progressText = document.getElementById('progress-text');
-        
-        const scoreText = document.getElementById('score-text');
-        const scoreMessage = document.getElementById('score-message');
-        const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
-        const retakeQuizBtn = document.getElementById('retake-quiz-btn');
-        const reviewAnswersBtn = document.getElementById('review-answers-btn');
-        const backToResultsBtn = document.getElementById('back-to-results-btn');
-        
-        const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
-        const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
-        const generateQuizBtn = document.getElementById('generate-quiz-btn');
-        const checkAssignmentBtn = document.getElementById('check-assignment-btn');
-        const uploadPrompt = document.getElementById('upload-prompt');
-        const questionCountSelect = document.getElementById('question-count');
-        const loadingText = document.getElementById('loading-text');
-        const progressBar = document.getElementById('progress-bar');
-        const progressBarText = document.getElementById('progress-bar-text');
-        const customPrompt = document.getElementById('custom-prompt');
-        const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+            const firebaseConfig = {
+                apiKey: config.firebaseApiKey,
+                authDomain: config.firebaseAuthDomain,
+                projectId: config.firebaseProjectId,
+                storageBucket: config.firebaseStorageBucket,
+                messagingSenderId: config.firebaseMessagingSenderId,
+                appId: config.firebaseAppId,
+                measurementId: config.firebaseMeasurementId
+            };
 
-        // Auth & Modal Elements
-        const anonHeader = document.getElementById('anon-header');
-        const authHeader = document.getElementById('auth-header');
-        const signoutBtn = document.getElementById('signout-btn');
-        const loginLink = document.getElementById('login-link');
-        const signupLink = document.getElementById('signup-link');
-        const saveQuizBtn = document.getElementById('save-quiz-btn');
-        const loginModal = document.getElementById('login-modal');
-        const cancelLoginBtn = document.getElementById('cancel-login-btn');
-        const googleLoginBtn = document.getElementById('google-login-btn');
-        const emailSignupBtn = document.getElementById('email-signup-btn');
-        const emailLoginBtn = document.getElementById('email-login-btn');
-        const signupEmail = document.getElementById('signup-email');
-        const signupPassword = document.getElementById('signup-password');
-        const loginEmail = document.getElementById('login-email');
-        const loginPassword = document.getElementById('login-password');
-        const signupTabBtn = document.getElementById('signup-tab-btn');
-        const loginTabBtn = document.getElementById('login-tab-btn');
-        const signupPanel = document.getElementById('signup-panel');
-        const loginPanel = document.getElementById('login-panel');
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app);
+        }
 
         // App State
-        let imageDataArray = [];
+        initializeAppAndServices().then(() => {
+            // All app logic that depends on Firebase services goes here
+            
+            // DOM Elements (now defined inside the module)
+            const uploadState = document.getElementById('upload-state');
+            const loadingState = document.getElementById('loading-state');
+            const quizState = document.getElementById('quiz-state');
+            const resultsState = document.getElementById('results-state');
+            const reviewState = document.getElementById('review-state');
+            const reviewContainer = document.getElementById('review-container');
+            const assignmentResultsState = document.getElementById('assignment-results-state');
+
+            const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
+            const imageUpload = document.getElementById('image-upload');
+            const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
+            
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const feedbackText = document.getElementById('feedback-text');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const prevQuestionBtn = document.getElementById('prev-question-btn');
+            const progressText = document.getElementById('progress-text');
+            
+            const scoreText = document.getElementById('score-text');
+            const scoreMessage = document.getElementById('score-message');
+            const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
+            const retakeQuizBtn = document.getElementById('retake-quiz-btn');
+            const reviewAnswersBtn = document.getElementById('review-answers-btn');
+            const backToResultsBtn = document.getElementById('back-to-results-btn');
+            
+            const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
+            const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
+            const generateQuizBtn = document.getElementById('generate-quiz-btn');
+            const checkAssignmentBtn = document.getElementById('check-assignment-btn');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const questionCountSelect = document.getElementById('question-count');
+            const loadingText = document.getElementById('loading-text');
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarText = document.getElementById('progress-bar-text');
+            const customPrompt = document.getElementById('custom-prompt');
+            const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+
+            // Auth & Modal Elements
+            const anonHeader = document.getElementById('anon-header');
+            const authHeader = document.getElementById('auth-header');
+            const signoutBtn = document.getElementById('signout-btn');
+            const loginLink = document.getElementById('login-link');
+            const signupLink = document.getElementById('signup-link');
+            const saveQuizBtn = document.getElementById('save-quiz-btn');
+            const loginModal = document.getElementById('login-modal');
+            const cancelLoginBtn = document.getElementById('cancel-login-btn');
+            const googleLoginBtn = document.getElementById('google-login-btn');
+            const emailSignupBtn = document.getElementById('email-signup-btn');
+            const emailLoginBtn = document.getElementById('email-login-btn');
+            const signupEmail = document.getElementById('signup-email');
+            const signupPassword = document.getElementById('signup-password');
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            const signupTabBtn = document.getElementById('signup-tab-btn');
+            const loginTabBtn = document.getElementById('login-tab-btn');
+            const signupPanel = document.getElementById('signup-panel');
+            const loginPanel = document.getElementById('login-panel');
+
+            let imageDataArray = [];
         let quizData = [];
         let userAnswers = []; // To store the user's answers
         let currentQuestionIndex = 0;
@@ -540,9 +551,6 @@
 
         // Firebase Auth State Listener
         onAuthStateChanged(auth, user => {
-            const authHeader = document.getElementById('auth-header');
-            const anonHeader = document.getElementById('anon-header');
-
             if (user && !user.isAnonymous) {
                 // Logged-in user
                 currentUserId = user.uid;
@@ -1151,6 +1159,8 @@ IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ens
                 reader.readAsDataURL(file);
             });
         }
+
+        }); // End of main app logic wrapper
 
     </script>
 </body>
