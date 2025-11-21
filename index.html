@@ -794,8 +794,9 @@ The goal is to help the student learn the underlying concepts. IMPORTANT: Do not
 
             let systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
 {"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
-IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.`;
+IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.
 
+CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exact string match to one of the options provided. Do not leave it null or undefined. Respond ONLY with the JSON object.`;
             let userPrompt = promptText ? promptText : `Analyze the concepts in the following image(s).`;
             userPrompt += ` Generate a practice quiz with ${questionCount} questions.`;
 
