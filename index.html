@@ -281,6 +281,10 @@
                 </div>
             </div>
         </div>
+
+        <footer class="mt-8 text-center">
+            <p class="text-xs text-slate-400 dark:text-slate-500">&copy; 2025 Tutor Mate. All rights reserved.</p>
+        </footer>
     </div>
 
     <!-- Login/Signup Modal -->
@@ -708,7 +712,7 @@ Format your response using Markdown. For each question, create a single list ite
 
 - **Question [Number]:** (Describe the problem)
 - **Question [Number]:**\n(Describe the problem)
-  **Student's Answer:** (Carefully identify the student's written answer from the image. If the student's answer is not clearly visible or not applicable, state "Not visible" or "Not applicable".)
+  **Student's Answer:** (Perform a direct and literal transcription of the student's handwritten answer from the image. Do not calculate, interpret, or correct the answer in this field; transcribe it exactly as it appears. If the student's answer is not clearly visible or not applicable, state "Not visible" or "Not applicable".)
   **Correct Answer:** (State the actual correct answer clearly)
   **Explanation:** (Provide a clear, step-by-step, easy-to-understand explanation. If the student's answer was incorrect, gently explain why and how to arrive at the correct answer. Ensure the explanation implicitly clarifies if the student's answer was correct or incorrect by comparing it to the correct answer.)
 
@@ -735,71 +739,52 @@ The goal is to help the student learn the underlying concepts. IMPORTANT: Do not
                 if (responseText) {
                     // Clean up any stray '$' characters and convert Markdown to HTML
                     let cleanedText = responseText.replace(/\$/g, '');
-                    const rawHtmlContent = marked.parse(cleanedText);
 
-                    // Create a temporary div to parse the HTML string into a DOM structure
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = rawHtmlContent;
+                    // Split the response into blocks for each question (each list item)
+                    const questionBlocks = cleanedText.split('- **Question');
 
-                    // Iterate over each list item (each question's feedback)
-                    tempDiv.querySelectorAll('li').forEach(li => {
+                    const processedBlocks = questionBlocks.map(block => {
+                        if (!block.trim()) return ''; // Skip empty blocks
+
+                        const lines = block.split('\n');
                         let studentAnswerText = '';
                         let correctAnswerText = '';
-                        let studentAnswerParagraph = null;
+                        let studentAnswerLineIndex = -1;
 
-                        // Find the paragraphs containing "Student's Answer:" and "Correct Answer:"
-                        li.querySelectorAll('p').forEach(p => {
-                            const strongTag = p.querySelector('strong');
-                            if (strongTag) {
-                                if (strongTag.textContent.includes("Student's Answer:")) {
-                                    studentAnswerParagraph = p;
-                                    // Extract text after "Student's Answer:"
-                                    studentAnswerText = p.textContent.replace("Student's Answer:", '').trim();
-                                } else if (strongTag.textContent.includes("Correct Answer:")) {
-                                    // Extract text after "Correct Answer:"
-                                    correctAnswerText = p.textContent.replace("Correct Answer:", '').trim();
-                                }
+                        lines.forEach((line, index) => {
+                            if (line.includes('**Student\'s Answer:**')) {
+                                studentAnswerText = line.replace('**Student\'s Answer:**', '').trim();
+                                studentAnswerLineIndex = index;
+                            } else if (line.includes('**Correct Answer:**')) {
+                                correctAnswerText = line.replace('**Correct Answer:**', '').trim();
                             }
                         });
 
-                        if (studentAnswerParagraph && studentAnswerText !== '' && correctAnswerText !== '' && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
-                            // Normalize text for robust comparison: convert to lowercase, remove extra spaces, trim
+                        if (studentAnswerText && correctAnswerText && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
                             const normalizedStudentAnswer = studentAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
                             const normalizedCorrectAnswer = correctAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
-
                             const isCorrect = normalizedStudentAnswer === normalizedCorrectAnswer;
                             const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
 
-                            const strongStudentAnswerTag = studentAnswerParagraph.querySelector('strong');
-                            if (strongStudentAnswerTag) {
-                                // Create a span to wrap the answer text
-                                const answerSpan = document.createElement('span');
-                                answerSpan.className = answerClass;
-                                answerSpan.textContent = studentAnswerText; // Use the extracted text
-
-                                // Remove all nodes after the strong tag and append the new span
-                                let currentNode = strongStudentAnswerTag.nextSibling;
-                                while (currentNode) {
-                                    const next = currentNode.nextSibling;
-                                    studentAnswerParagraph.removeChild(currentNode);
-                                    currentNode = next;
-                                }
-                                studentAnswerParagraph.appendChild(answerSpan);
-                            }
+                            // Rebuild the line with an HTML span for color. The 'marked' library will render this correctly.
+                            lines[studentAnswerLineIndex] = `  **Student's Answer:** <span class="${answerClass} font-bold">${studentAnswerText}</span>`;
                         }
-                    });
-                    let htmlContent = tempDiv.innerHTML; // Get the modified HTML
-                    assignmentFeedbackContainer.innerHTML = htmlContent;
+                        return '- **Question' + lines.join('\n');
+                    }).join('');
+
+                    const finalHtmlContent = marked.parse(processedBlocks);
+
+                    assignmentFeedbackContainer.innerHTML = finalHtmlContent;
                     completeProgressBar();
                     loadingState.classList.add('hidden');
                     authHeader.parentElement.classList.remove('hidden'); // Show auth links
                     assignmentResultsState.classList.remove('hidden');
 
-                    // Show the save button only if the user is signed out (is anonymous) to prompt login
-                    if (auth.currentUser && auth.currentUser.isAnonymous) {
-                        saveAssignmentBtn.classList.remove('hidden');
-                    } else {
+                    // Show save button if user is not fully logged in
+                    if (auth.currentUser && !auth.currentUser.isAnonymous) {
                         saveAssignmentBtn.classList.add('hidden');
+                    } else {
+                        saveAssignmentBtn.classList.remove('hidden');
                     }
                 } else {
                     throw new Error("The AI could not provide feedback for this assignment.");
