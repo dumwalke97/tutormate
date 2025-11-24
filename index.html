@@ -457,6 +457,22 @@
             const alertMessage = document.getElementById('alert-message');
             const alertCloseBtn = document.getElementById('alert-close-btn');
 
+            /**
+             * Compares two strings to see if they represent numbers that are close enough.
+             * Accounts for characters like '%' and rounding differences.
+             */
+            function areNumbersClose(str1, str2, tolerance = 0.01) {
+                const num1Match = str1.match(/[-+]?[0-9]*\.?[0-9]+/);
+                const num2Match = str2.match(/[-+]?[0-9]*\.?[0-9]+/);
+
+                if (num1Match && num2Match) {
+                    const num1 = parseFloat(num1Match[0]);
+                    const num2 = parseFloat(num2Match[0]);
+                    return Math.abs(num1 - num2) <= tolerance;
+                }
+                return false;
+            }
+
             let imageDataArray = [];
         let quizData = [];
         let userAnswers = []; // To store the user's answers
@@ -706,18 +722,22 @@
             if (!commonApiSetup()) return;
             loadingText.textContent = "Checking Assignment...";
             
-            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question on the worksheet, provide a detailed analysis.
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question, provide a detailed analysis.
 
 Format your response using Markdown. For each question, create a single list item that contains the question, the student's visible answer, the correct answer, and an explanation. Use the following structure:
 
 - **Question [Number]:** (Describe the problem)
-- **Question [Number]:**\n(Describe the problem)
   **Student's Answer:** (Perform a direct and literal transcription of the student's handwritten answer from the image. Do not calculate, interpret, or correct the answer in this field; transcribe it exactly as it appears. If the student's answer is not clearly visible or not applicable, state "Not visible" or "Not applicable".)
-  **Correct Answer:** (State the actual correct answer clearly)
+  **Correct Answer:** (State the actual correct answer. IMPORTANT: For math problems, if the student has rounded their answer, your "Correct Answer" should also be rounded to the same number of decimal places, unless the worksheet instructions explicitly state otherwise. Similarly, if a student's answer is numerically correct but omits a descriptive word (e.g., writing "5" instead of "5 apples"), the "Correct Answer" should also be just the number "5" to ensure a fair comparison. Only include descriptive words if they are essential to the answer's correctness.)
   **Explanation:** (Provide a clear, step-by-step, easy-to-understand explanation. If the student's answer was incorrect, gently explain why and how to arrive at the correct answer. Ensure the explanation implicitly clarifies if the student's answer was correct or incorrect by comparing it to the correct answer.)
 
-The goal is to help the student learn the underlying concepts. IMPORTANT: Do not use any special formatting characters for math, like '$'. Respond only with plain text and Markdown lists. Ensure your entire response is valid Markdown and starts with the first list item. Keep explanations concise and as a single block of text, using line breaks for readability within the explanation, but avoid blank lines that would create new paragraphs.
-`;
+The goal is to help the student learn the underlying concepts.
+
+CRITICAL RULES:
+1.  Do NOT use any special formatting characters for math, like '$'.
+2.  Respond ONLY with plain text and Markdown lists.
+3.  Ensure your entire response is valid Markdown and starts with the first list item.
+4.  Keep explanations concise and as a single block of text, using line breaks for readability within the explanation, but avoid blank lines that would create new paragraphs.`;
 
             const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
             
@@ -743,34 +763,76 @@ The goal is to help the student learn the underlying concepts. IMPORTANT: Do not
                     // Split the response into blocks for each question (each list item)
                     const questionBlocks = cleanedText.split('- **Question');
 
-                    const processedBlocks = questionBlocks.map(block => {
-                        if (!block.trim()) return ''; // Skip empty blocks
+                    const processedBlocks = questionBlocks
+                        .filter(block => block.trim()) // Filter out empty blocks
+                        .map(block => {
+                            const lines = block.split('\n');
+                            let studentAnswerText = '';
+                            let correctAnswerText = '';
+                            let studentAnswerLineIndex = -1;
 
-                        const lines = block.split('\n');
-                        let studentAnswerText = '';
-                        let correctAnswerText = '';
-                        let studentAnswerLineIndex = -1;
+                            lines.forEach((line, index) => {
+                                if (line.includes('**Student\'s Answer:**')) {
+                                    studentAnswerText = line.replace('**Student\'s Answer:**', '').trim();
+                                    studentAnswerLineIndex = index;
+                                } else if (line.includes('**Correct Answer:**')) {
+                                    correctAnswerText = line.replace('**Correct Answer:**', '').trim();
+                                }
+                            });
 
-                        lines.forEach((line, index) => {
-                            if (line.includes('**Student\'s Answer:**')) {
-                                studentAnswerText = line.replace('**Student\'s Answer:**', '').trim();
-                                studentAnswerLineIndex = index;
-                            } else if (line.includes('**Correct Answer:**')) {
-                                correctAnswerText = line.replace('**Correct Answer:**', '').trim();
+                            if (studentAnswerLineIndex !== -1 && studentAnswerText && correctAnswerText && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
+                                let processedAnswerHtml;
+                                
+                                // Use matchAll for a more robust way of parsing parts, which avoids issues with splitting on negative signs.
+                                // This regex finds a label (like "a)") and captures all text until the next label or the end of the string.
+                                // This is a safer regex that is less "greedy" and won't consume parts of the answer.
+                                const partFinderRegex = /([a-z]\)|\d+\.)([^a-z\d]*?)(?=[a-z]\)|\d+\.|$)/gi;
+                                    
+                                    const studentParts = [...studentAnswerText.matchAll(partFinderRegex)];
+                                    const correctParts = [...correctAnswerText.matchAll(partFinderRegex)];
+
+                                    let htmlParts = [];
+                                    // This logic now only runs if parts were successfully found and the counts match.
+                                    if (studentParts.length > 0 && studentParts.length === correctParts.length) { 
+                                        for (let i = 0; i < studentParts.length; i++) {
+                                            const studentMatch = studentParts[i];
+                                            const correctMatch = correctParts[i];
+
+                                            const label = studentMatch[1]; // e.g., "a)"
+                                            const studentPart = (studentMatch[2] || '').trim(); // e.g., "-11.2" or "George Washington"
+                                            const correctPart = (correctMatch[2] || '').trim();
+
+                                            // Check for numerical closeness first, then fall back to string comparison.
+                                            const isCorrect = areNumbersClose(studentPart, correctPart) || 
+                                                              studentPart.toLowerCase() === correctPart.toLowerCase();
+
+                                            const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
+
+                                            htmlParts.push(`<span class="${answerClass} font-bold">${label} ${studentPart}</span>`);
+                                        }
+                                        processedAnswerHtml = htmlParts.join(' ');
+                                }
+
+                                // If multi-part logic didn't run or didn't produce HTML, fall back to single-part logic.
+                                // This ensures single answers and mismatched multi-part answers are still processed.
+                                if (!processedAnswerHtml) {
+                                    const normalizedStudentAnswer = studentAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+                                    const normalizedCorrectAnswer = correctAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+                                    
+                                    // Check for numerical closeness first, then fall back to string comparison.
+                                    const isCorrect = areNumbersClose(studentAnswerText, correctAnswerText) || 
+                                                      normalizedStudentAnswer === normalizedCorrectAnswer;
+                                    const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
+                                    processedAnswerHtml = `<span class="${answerClass} font-bold">${studentAnswerText}</span>`;
+                                }
+                                
+                                // Rebuild the line with the processed HTML
+                                lines[studentAnswerLineIndex] = `  **Student's Answer:** ${processedAnswerHtml}`;
                             }
-                        });
 
-                        if (studentAnswerText && correctAnswerText && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
-                            const normalizedStudentAnswer = studentAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
-                            const normalizedCorrectAnswer = correctAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
-                            const isCorrect = normalizedStudentAnswer === normalizedCorrectAnswer;
-                            const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
-
-                            // Rebuild the line with an HTML span for color. The 'marked' library will render this correctly.
-                            lines[studentAnswerLineIndex] = `  **Student's Answer:** <span class="${answerClass} font-bold">${studentAnswerText}</span>`;
-                        }
-                        return '- **Question' + lines.join('\n');
-                    }).join('');
+                            return '- **Question' + lines.join('\n');
+                        })
+                        .join('');
 
                     const finalHtmlContent = marked.parse(processedBlocks);
 
