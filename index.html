@@ -182,6 +182,13 @@
                 </div>
                 
                 <div class="space-y-4">
+                     <div id="folder-selection-container" class="hidden mb-4">
+                        <label for="folder-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Save to Folder:</label>
+                        <select id="folder-select" name="folder-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
+                            <option value="general">General</option>
+                        </select>
+                        <button id="new-folder-btn" class="mt-2 px-4 py-2 border border-slate-300 dark:border-slate-500 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">New Folder</button>
+                    </div>
                      <div>
                         <label for="custom-prompt" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Create a quiz from a topic:</label>
                         <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-2 border-slate-400 dark:bg-slate-700 dark:border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
@@ -359,7 +366,15 @@
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { 
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            orderBy,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";        
 
         // --- App Initialization ---
@@ -428,6 +443,8 @@
             const progressBarText = document.getElementById('progress-bar-text');
             const customPrompt = document.getElementById('custom-prompt');
             const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+            const newFolderBtn = document.getElementById('new-folder-btn');
+            const folderSelectionContainer = document.getElementById('folder-selection-container');
 
             // Auth & Modal Elements
             const anonHeader = document.getElementById('anon-header');
@@ -478,6 +495,7 @@
         let userAnswers = []; // To store the user's answers
         let currentQuestionIndex = 0;
         let score = 0;
+        let userFolders = [];
         let currentUserId = null;
         let progressInterval = null;
         
@@ -486,6 +504,13 @@
 
         // Event Listeners
         imageUpload.addEventListener('change', handleImageUpload);
+        newFolderBtn.addEventListener('click', async () => {
+            const folderName = prompt("Enter a name for the new folder:");
+            if (folderName && folderName.trim() !== "") {
+                await createNewFolder(folderName.trim());
+                await loadUserFolders(); // Refresh the folder list
+            }
+        });
         generateQuizBtn.addEventListener('click', generateQuiz);
         checkAssignmentBtn.addEventListener('click', checkAssignment);
         nextQuestionBtn.addEventListener('click', showNextQuestion);
@@ -610,10 +635,13 @@
                 saveQuizBtn.classList.remove('hidden');
                 usernameDisplay.textContent = user.displayName || user.email; // Show name or email
                 saveAssignmentBtn.classList.remove('hidden');
+                folderSelectionContainer.classList.remove('hidden');
                 authHeader.classList.remove('hidden');
                 anonHeader.classList.add('hidden');
+                loadUserFolders();
             } else if (user && user.isAnonymous) {
                 // Anonymous user
+                folderSelectionContainer.classList.add('hidden');
                 currentUserId = user.uid;
                 anonHeader.classList.remove('hidden');
                 authHeader.classList.add('hidden');
@@ -627,6 +655,39 @@
                 });
             }
         });
+
+        async function createNewFolder(folderName) {
+            if (!currentUserId || !folderName) return;
+            try {
+                const foldersCol = collection(db, `users/${currentUserId}/folders`);
+                await addDoc(foldersCol, {
+                    name: folderName,
+                    createdAt: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Error creating new folder:", error);
+                showAlert("Error", "Could not create new folder. Please try again.");
+            }
+        }
+
+        async function loadUserFolders() {
+            if (!currentUserId) return;
+            try {
+                const foldersCol = collection(db, `users/${currentUserId}/folders`);
+                const q = query(foldersCol, orderBy("createdAt", "desc"));
+                const folderSnapshot = await getDocs(q);
+                
+                userFolders = folderSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const folderSelect = document.getElementById('folder-select');
+                folderSelect.innerHTML = '<option value="general">General</option>'; // Reset but keep General
+                userFolders.forEach(folder => {
+                    folderSelect.innerHTML += `<option value="${folder.id}">${folder.name}</option>`;
+                });
+            } catch (error) {
+                console.error("Error loading user folders:", error);
+            }
+        }
 
         function handleImageUpload(event) {
             const files = event.target.files;
@@ -1182,6 +1243,7 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
 
             checkAssignmentBtn.classList.add('hidden');
             uploadPrompt.classList.remove('hidden');
+            folderSelectionContainer.classList.add('hidden');
             uploadButtonLabel.textContent = 'Add Photos';
             imageUpload.value = ''; 
             questionCountSelect.value = '10';
