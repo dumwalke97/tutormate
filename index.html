@@ -208,6 +208,9 @@
                     <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Generate Quiz
                     </button>
+                    <button id="save-only-btn" class="hidden mt-3 w-full inline-flex items-center justify-center px-6 py-3 border-2 border-indigo-800 text-indigo-800 font-medium rounded-md shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200">
+                        Save to Folder Only
+                    </button>
                 </div>
             </div>
 
@@ -353,6 +356,11 @@
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+        <p id="toast-message"></p>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
@@ -375,7 +383,13 @@
             orderBy,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";        
+        import { 
+            getStorage,
+            ref,
+            uploadString,
+            getDownloadURL,
+            uploadBytes
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
         // --- App Initialization ---
         let auth, db, storage;
@@ -445,6 +459,9 @@
             const saveAssignmentBtn = document.getElementById('save-assignment-btn');
             const newFolderBtn = document.getElementById('new-folder-btn');
             const folderSelectionContainer = document.getElementById('folder-selection-container');
+            const saveOnlyBtn = document.getElementById('save-only-btn');
+            const toastNotification = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
 
             // Auth & Modal Elements
             const anonHeader = document.getElementById('anon-header');
@@ -499,7 +516,58 @@
         let currentUserId = null;
         let progressInterval = null;
         
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastNotification.classList.remove('opacity-0', 'pointer-events-none');
+
+            setTimeout(() => {
+                toastNotification.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+
+
         // The API key is REMOVED from the client-side code for security.
+        async function saveImagesToFolder() {
+            if (imageDataArray.length === 0) {
+                alert('Please upload an image first.');
+                return;
+            }
+
+            uploadState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingText.textContent = 'Saving to Folder...';
+
+            const folderSelect = document.getElementById('folder-select');
+            const folderId = folderSelect.value;
+
+            try {
+                const uploadPromises = imageDataArray.map(async (imgData) => {
+                    const imageRef = ref(storage, `users/${currentUserId}/uploads/${imgData.id}.jpg`);
+                    await uploadString(imageRef, imgData.thumbnailSrc, 'data_url');
+                    const downloadURL = await getDownloadURL(imageRef);
+
+                    const itemsCol = collection(db, `users/${currentUserId}/folders/${folderId}/items`);
+                    await addDoc(itemsCol, {
+                        type: 'image',
+                        url: downloadURL,
+                        createdAt: serverTimestamp()
+                    });
+                });
+
+                await Promise.all(uploadPromises);
+
+                loadingState.classList.add('hidden');
+                uploadState.classList.remove('hidden');
+                showToast('Saved successfully to your folder!');
+                resetApp();
+            } catch (error) {
+                console.error("Error saving images to folder:", error);
+                showAlert("Save Failed", "There was an error saving your images. Please try again.");
+                resetApp();
+            }
+        }
+
         // It now lives in the Netlify environment variables.
 
         // Event Listeners
@@ -511,6 +579,7 @@
                 await loadUserFolders(); // Refresh the folder list
             }
         });
+        saveOnlyBtn.addEventListener('click', saveImagesToFolder);
         generateQuizBtn.addEventListener('click', generateQuiz);
         checkAssignmentBtn.addEventListener('click', checkAssignment);
         nextQuestionBtn.addEventListener('click', showNextQuestion);
@@ -636,6 +705,7 @@
                 usernameDisplay.textContent = user.displayName || user.email; // Show name or email
                 saveAssignmentBtn.classList.remove('hidden');
                 folderSelectionContainer.classList.remove('hidden');
+                saveOnlyBtn.classList.remove('hidden');
                 authHeader.classList.remove('hidden');
                 anonHeader.classList.add('hidden');
                 loadUserFolders();
@@ -647,6 +717,7 @@
                 authHeader.classList.add('hidden');
                 saveQuizBtn.classList.add('hidden');
                 saveAssignmentBtn.classList.add('hidden');
+                saveOnlyBtn.classList.add('hidden');
                 usernameDisplay.textContent = ''; // Clear username
             } else {
                 // New visitor, sign them in anonymously
@@ -738,6 +809,9 @@
                 multiImagePreviewContainer.classList.remove('hidden');
                 multiImagePreviewContainer.classList.add('flex');
                 checkAssignmentBtn.classList.remove('hidden');
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                    saveOnlyBtn.classList.remove('hidden');
+                }
                 uploadPrompt.classList.add('hidden'); // This hides the initial prompt
                 uploadButtonLabel.textContent = 'Add More Photos';
 
@@ -761,6 +835,7 @@
             // If no images are left, revert to initial upload state
             if (imageDataArray.length === 0) {
                 checkAssignmentBtn.classList.add('hidden');
+                saveOnlyBtn.classList.add('hidden');
                 uploadPrompt.classList.remove('hidden');
                 uploadButtonLabel.textContent = 'Add Photos';
             }
@@ -1241,10 +1316,19 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             multiImagePreviewContainer.classList.remove('flex');
             assignmentFeedbackContainer.textContent = '';
 
+            // Always hide these buttons on reset, as the image array is now empty.
             checkAssignmentBtn.classList.add('hidden');
+            saveOnlyBtn.classList.add('hidden');
+
+            // Conditionally show/hide folder selection based on auth state.
+            if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                folderSelectionContainer.classList.remove('hidden');
+            } else {
+                folderSelectionContainer.classList.add('hidden');
+            }
+
             uploadPrompt.classList.remove('hidden');
-            folderSelectionContainer.classList.add('hidden');
-            uploadButtonLabel.textContent = 'Add Photos';
+            uploadButtonLabel.textContent = 'Add Images/Files';
             imageUpload.value = ''; 
             questionCountSelect.value = '10';
             customPrompt.value = '';
