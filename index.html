@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tutor Mate</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script> <!-- Added for .docx parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added for Markdown parsing -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,7 +166,7 @@
                     <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Upload files or use your camera</p>
                 </div>
 
-                <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
+                <input type="file" id="image-upload" class="hidden" multiple>
                 
                 <label for="image-upload" id="upload-button" class="mt-6 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -772,12 +773,22 @@
             loadingState.classList.remove('hidden');
             loadingText.textContent = "Processing Images...";
 
-            const filePromises = Array.from(files).map(file => resizeImage(file, 1024, 0.9));
+            const filePromises = Array.from(files).map(file => {
+                if (file.type.startsWith('image/')) {
+                    return processImageFile(file, 1024, 0.9);
+                } else if (file.name.endsWith('.docx')) {
+                    // Handle .docx files by extracting text
+                    return processDocxFile(file);
+                } else {
+                    // For other non-image files like PDF
+                    return processGenericFile(file);
+                }
+            });
 
             Promise.all(filePromises).then(processedImages => {
                 processedImages.forEach(imgData => {
-                    if (imgData) { // imgData is { thumbnailSrc, apiData, id }
-                        imageDataArray.push(imgData);
+                    if (imgData) { // fileData is { thumbnailSrc, apiData, id }
+                        imageDataArray.push(imgData); // Using the same array for all files
 
                         // Create container for thumbnail and delete button
                         const thumbContainer = document.createElement('div');
@@ -879,7 +890,11 @@ CRITICAL RULES:
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({ inlineData: data.apiData });
+                if (data.apiData.text) {
+                    parts.push({ text: data.apiData.text }); // It's a text part
+                } else {
+                    parts.push({ inlineData: data.apiData }); // It's a file part
+                }
             });
             
             const payload = {
@@ -1025,7 +1040,11 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             
             const parts = [ { text: userPrompt } ];
             imageDataArray.forEach(data => {
-                parts.push({ inlineData: data.apiData });
+                if (data.apiData.text) {
+                    parts.push({ text: data.apiData.text }); // It's a text part
+                } else {
+                    parts.push({ inlineData: data.apiData }); // It's a file part
+                }
             });
 
             const payload = {
@@ -1343,8 +1362,8 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
         }
 
         // Image Resizing Utility
-        function resizeImage(file, maxSize, quality) {
-            return new Promise((resolve, reject) => {
+        function processImageFile(file, maxSize, quality) {
+             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
@@ -1387,6 +1406,79 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        function processDocxFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result })
+                        .then(result => {
+                            const text = result.value; // The raw text from the DOCX file
+                            const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                            
+                            // Create a dynamic SVG icon with the file extension
+                            const extension = "DOCX";
+                            const iconSrc = createFileTypeIcon(extension);
+
+                            // For the API, we send the extracted text, not the file data
+                            resolve({
+                                thumbnailSrc: iconSrc,
+                                apiData: { text: text }, // Sending as a text part
+                                id: uniqueId
+                            });
+                        })
+                        .catch(err => {
+                            console.error("Error processing .docx file:", err);
+                            showAlert("File Error", `Could not read the content of ${file.name}. The file might be corrupted or in an unsupported format.`);
+                            resolve(null); // Resolve with null to avoid breaking the Promise.all chain
+                        });
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file); // mammoth.js needs an ArrayBuffer
+            });
+        }
+
+        function processGenericFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+                    if (!match) {
+                        console.error("Could not parse data URL for file:", file.name);
+                        return resolve(null);
+                    }
+
+                    const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Create a dynamic SVG icon with the file extension
+                    const extension = file.name.split('.').pop().toUpperCase();
+                    const genericIconSrc = createFileTypeIcon(extension);
+
+                    resolve({
+                        thumbnailSrc: genericIconSrc,
+                        apiData: { mimeType: match[1], data: match[2] },
+                        id: uniqueId
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function createFileTypeIcon(extension) {
+            // This function generates an SVG data URL for a file icon with the extension text.
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+                    <rect width="80" height="80" rx="8" fill="#475569"></rect>
+                    <path d="M20 8 L52 8 L64 20 L64 72 L20 72 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"></path>
+                    <path d="M52 8 L52 20 L64 20 Z" fill="#cbd5e1"></path>
+                    <text x="42" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="bold" fill="#1e293b" text-anchor="middle">${extension}</text>
+                </svg>
+            `;
+            // We need to properly encode the SVG for use in a data URL.
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
         }
 
         }); // End of main app logic wrapper
