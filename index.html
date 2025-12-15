@@ -126,27 +126,42 @@
         .answer-incorrect {
             color: #ef4444; /* red-500 */
         }
+        /* Style for selected images in the folder view */
+        .folder-image-thumb.selected {
+            outline: 3px solid #0ea5e9; /* sky-500 */
+            outline-offset: 2px;
+        }
     </style>
     <!-- Firebase SDKs will be loaded at the end of the body -->
 </head>
-<body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex items-start md:items-center justify-center min-h-screen p-4">
+<body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <div class="w-full max-w-md mx-auto">
-        <div id="main-container" class="bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500">
+    <nav class="w-full bg-slate-200 dark:bg-slate-800 shadow-md p-4 flex justify-between items-center fixed top-0 left-0 z-50">
+        <!-- Logo/Title on the left -->
+        <div></div>
 
-            <!-- Auth Header Container -->
-            <div class="flex justify-end items-center mb-4">
-                <div id="anon-header" class="hidden">
-                    <a id="login-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-4">Log In</a>
-                    <span class="text-indigo-800 dark:text-indigo-400 font-medium ml-2">|</span>
-                    <a id="signup-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-2">Sign Up</a>
-                </div>
-                <div id="auth-header" class="hidden items-center">
-                    <span id="username-display" class="font-medium text-indigo-800 dark:text-indigo-400"></span>
-                    <span class="text-slate-400 dark:text-slate-500 mx-2">|</span>
-                    <button id="signout-btn" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer">Sign Out</button>
+        <!-- Auth controls on the right -->
+        <div class="flex items-center">
+            <div id="anon-header" class="hidden">
+                <a id="login-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-4">Log In</a>
+                <span class="text-indigo-800 dark:text-indigo-400 font-medium ml-2">|</span>
+                <a id="signup-link" class="text-indigo-800 dark:text-indigo-400 font-medium cursor-pointer ml-2">Sign Up</a>
+            </div>
+            <div id="auth-header" class="hidden items-center">
+                <span id="username-display" class="font-medium text-indigo-800 dark:text-indigo-400 mr-4"></span>
+                <div class="relative inline-block text-left">
+                    <button id="menu-btn" class="p-2 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
+                    <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <button id="my-folders-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">My Folders</button>
+                        <button id="signout-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Sign Out</button>
+                    </div>
                 </div>
             </div>
+        </div>
+    </nav>
+
+    <div class="p-4">
+        <div id="main-container" class="w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500 mx-auto mt-24">
 
             <!-- Initial Upload State -->
             <div id="upload-state">
@@ -291,6 +306,48 @@
                     <!-- Reviewed questions will be dynamically inserted here -->
                 </div>
             </div>
+
+            <!-- Folders View State -->
+            <div id="folders-view" class="hidden">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <button id="folders-back-btn" class="px-4 py-2 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
+                        &larr; Back
+                    </button>
+                    <h2 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400">My Folders</h2>
+                    <div class="w-16"></div> <!-- Spacer for alignment -->
+                </div>
+
+                <!-- Folder List Container -->
+                <div id="folders-list-container" class="grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Folders will be dynamically inserted here -->
+                </div>
+
+                <!-- Folder Contents Container -->
+                <div id="folder-contents-container" class="hidden">
+                    <div class="flex justify-end mb-4">
+                        <button id="select-all-folder-images-btn" class="px-4 py-2 border border-slate-300 dark:border-slate-500 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Select All</button>
+                    </div>
+                    <div id="folder-images-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2 rounded-lg bg-white dark:bg-slate-700">
+                        <!-- Images from the selected folder will be dynamically inserted here -->
+                    </div>
+
+                    <!-- Sticky Footer for Actions -->
+                    <div class="sticky bottom-0 bg-slate-200/80 dark:bg-slate-800/80 backdrop-blur-sm pt-4 -mx-8 px-8 pb-4 mt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <label for="folder-question-count" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Questions:</label>
+                            <select id="folder-question-count" name="folder-question-count" class="block w-1/2 pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
+                                <option>5</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>50</option><option>100</option>
+                            </select>
+                        </div>
+                        <div class="space-y-3">
+                            <button id="folder-generate-quiz-btn" disabled class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 disabled:bg-slate-400 disabled:cursor-not-allowed">Generate Quiz</button>
+                            <button id="folder-check-assignment-btn" disabled class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 disabled:bg-slate-400 disabled:cursor-not-allowed">Check Assignment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <footer class="mt-8 text-center">
@@ -427,6 +484,7 @@
             const resultsState = document.getElementById('results-state');
             const reviewState = document.getElementById('review-state');
             const reviewContainer = document.getElementById('review-container');
+            const foldersView = document.getElementById('folders-view');
             const assignmentResultsState = document.getElementById('assignment-results-state');
 
             const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
@@ -484,13 +542,21 @@
             const loginTabBtn = document.getElementById('login-tab-btn');
             const signupPanel = document.getElementById('signup-panel');
             const loginPanel = document.getElementById('login-panel');
+            const myFoldersLink = document.getElementById('my-folders-link');
             const usernameDisplay = document.getElementById('username-display');
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
 
             // Alert Modal Elements
             const alertModal = document.getElementById('alert-modal');
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
             const alertCloseBtn = document.getElementById('alert-close-btn');
+
+            // Folder View Action Buttons
+            const folderGenerateQuizBtn = document.getElementById('folder-generate-quiz-btn');
+            const folderCheckAssignmentBtn = document.getElementById('folder-check-assignment-btn');
+            const foldersBackBtn = document.getElementById('folders-back-btn');
 
             /**
              * Compares two strings to see if they represent numbers that are close enough.
@@ -515,6 +581,8 @@
         let score = 0;
         let userFolders = [];
         let currentUserId = null;
+        let selectedFolderId = null;
+        let selectedFolderImages = [];
         let progressInterval = null;
         
         function showToast(message) {
@@ -589,7 +657,26 @@
         retakeQuizBtn.addEventListener('click', retakeQuiz);
         reviewAnswersBtn.addEventListener('click', showReview);
         backToResultsBtn.addEventListener('click', showResults);
+        foldersBackBtn.addEventListener('click', resetApp);
         assignmentStartOverBtn.addEventListener('click', resetApp);
+
+        // Hamburger Menu Logic
+        menuBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent the window click listener from firing immediately
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close menu if clicked outside
+        document.addEventListener('click', (event) => {
+            if (!authHeader.contains(event.target)) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+
+        myFoldersLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close the menu on navigation
+            showFoldersView();
+        });
 
         // --- Auth & Modal Event Listeners ---
 
@@ -759,6 +846,113 @@
             } catch (error) {
                 console.error("Error loading user folders:", error);
             }
+        }
+
+        function showFoldersView() {
+            console.log('Folders view clicked'); // For debugging
+            // Hide all other main views
+            uploadState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            resultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
+
+            // Show the main folders view
+            foldersView.classList.remove('hidden');
+
+            const foldersListContainer = document.getElementById('folders-list-container');
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+
+            // Ensure the folder list is visible and the contents are hidden
+            foldersListContainer.classList.remove('hidden');
+            folderContentsContainer.classList.add('hidden');
+
+            foldersListContainer.innerHTML = ''; // Clear previous content
+
+            if (userFolders.length === 0) {
+                foldersListContainer.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-center">You don't have any folders yet.</p>`;
+                return;
+            }
+
+            userFolders.forEach(folder => {
+                const folderCard = document.createElement('button');
+                // Updated class list for a more visually appealing, themed card
+                folderCard.className = 'p-4 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center aspect-square bg-indigo-800 text-white hover:bg-indigo-900';
+                folderCard.innerHTML = `
+                    <svg class="w-12 h-12 mb-2 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    <span class="font-semibold text-center break-words">${folder.name}</span>
+                `;
+                folderCard.onclick = () => openFolder(folder.id);
+                foldersListContainer.appendChild(folderCard);
+            });
+        }
+
+        async function openFolder(folderId) {
+            selectedFolderId = folderId;
+            selectedFolderImages = []; // Reset selections when opening a new folder
+
+            const foldersListContainer = document.getElementById('folders-list-container');
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+            const folderImagesGrid = document.getElementById('folder-images-grid');
+
+            // Switch from the folder list view to the folder contents view
+            foldersListContainer.classList.add('hidden');
+            folderContentsContainer.classList.remove('hidden');
+            folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 dark:text-slate-400 p-4">Loading images...</p>';
+
+            updateFolderActionButtons(); // Ensure buttons are disabled initially
+
+            try {
+                const itemsPath = `users/${currentUserId}/folders/${folderId}/items`;
+                const itemsCol = collection(db, itemsPath);
+                const q = query(itemsCol, orderBy("createdAt", "desc"));
+                const itemsSnapshot = await getDocs(q);
+
+                folderImagesGrid.innerHTML = ''; // Clear loading message
+
+                if (itemsSnapshot.empty) {
+                    folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 dark:text-slate-400 p-4">This folder is empty.</p>';
+                    return;
+                }
+
+                itemsSnapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    if (item.type === 'image') {
+                        const thumbContainer = document.createElement('button');
+                        thumbContainer.className = 'folder-image-thumb relative aspect-square bg-slate-100 dark:bg-slate-600 rounded-md overflow-hidden transition-all duration-150';
+                        thumbContainer.dataset.imageId = item.id;
+
+                        const img = document.createElement('img');
+                        img.src = item.url;
+                        img.className = 'w-full h-full object-cover';
+                        thumbContainer.appendChild(img);
+
+                        thumbContainer.addEventListener('click', () => {
+                            thumbContainer.classList.toggle('selected');
+                            const imageId = thumbContainer.dataset.imageId;
+                            if (selectedFolderImages.includes(imageId)) {
+                                selectedFolderImages = selectedFolderImages.filter(id => id !== imageId);
+                            } else {
+                                selectedFolderImages.push(imageId);
+                            }
+                            updateFolderActionButtons();
+                        });
+
+                        folderImagesGrid.appendChild(thumbContainer);
+                    }
+                });
+            } catch (error) {
+                console.error("Error opening folder:", error);
+                showAlert("Error", "Could not load the contents of this folder.");
+                folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-red-500 p-4">Failed to load images.</p>';
+            }
+        }
+
+        function updateFolderActionButtons() {
+            const hasSelection = selectedFolderImages.length > 0;
+            folderGenerateQuizBtn.disabled = !hasSelection;
+            folderCheckAssignmentBtn.disabled = !hasSelection;
         }
 
         function handleImageUpload(event) {
@@ -1358,6 +1552,7 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             loadingState.classList.add('hidden');
             quizState.classList.add('hidden');
             uploadState.classList.remove('hidden');
+            foldersView.classList.add('hidden');
             authHeader.parentElement.classList.remove('hidden'); // Ensure auth links are visible on reset
         }
 
