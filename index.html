@@ -949,6 +949,11 @@
                 saveAssignmentBtn.classList.add('hidden');
                 saveOnlyBtn.classList.add('hidden');
                 usernameDisplay.textContent = ''; // Clear username
+                // If there's no specific view in the session, show the main upload page.
+                // This handles the case for a new anonymous user.
+                if (!sessionStorage.getItem('currentView')) {
+                    resetApp();
+                }
             } else {
                 // New visitor, sign them in anonymously
                 signInAnonymously(auth).catch(error => {
