@@ -153,6 +153,7 @@
                 <div class="relative inline-block text-left">
                     <button id="menu-btn" class="p-2 rounded-full hover:bg-indigo-700 transition-colors"><svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
                     <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <button id="home-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Home</button>
                         <button id="my-folders-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">My Folders</button>
                         <button id="signout-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Sign Out</button>
                     </div>
@@ -166,7 +167,7 @@
         <div id="main-container" class="w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500 mx-auto mt-24">
 
             <!-- Initial Upload State -->
-            <div id="upload-state">
+            <div id="upload-state" class="hidden">
                 <div class="text-center">
                     <img src="Assets/TutorMateLogoTransparent.png" alt="Tutor Mate Logo" class="mx-auto w-28 md:w-32 mb-4">
                     <p class="text-slate-500 dark:text-slate-400">Upload a worksheet to get started.</p>
@@ -278,6 +279,9 @@
                     <button id="save-quiz-btn" class="hidden w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
                         Save to My Folders
                     </button>
+                    <button id="quiz-back-to-folder-btn" class="hidden sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
+                        Back to Folder
+                    </button>
                     <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
                         Start Over
                     </button>
@@ -285,7 +289,7 @@
             </div>
             
             <!-- Assignment Results State -->
-            <div id="assignment-results-state" class="p-4 hidden fade-in">
+            <div id="assignment-results-state" class="p-4 hidden fade-in flex flex-col h-full">
                 <h2 class="text-2xl font-bold text-center mb-4">Assignment Feedback</h2>
                 <div id="assignment-feedback-container" class="border dark:border-slate-600"></div>
                 <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
@@ -316,7 +320,7 @@
                     <button id="folders-back-btn" class="px-4 py-2 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
                         &larr; Back
                     </button>
-                    <h2 class="text-2xl font-bold text-indigo-800 dark:text-indigo-400">My Folders</h2>
+                    <h2 id="folder-view-title" class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 truncate px-2">My Folders</h2>
                     <div class="w-16"></div> <!-- Spacer for alignment -->
                 </div>
 
@@ -327,8 +331,17 @@
 
                 <!-- Folder Contents Container -->
                 <div id="folder-contents-container" class="hidden">
-                    <div class="flex justify-end mb-4">
-                        <button id="select-all-folder-images-btn" class="px-4 py-2 border border-slate-300 dark:border-slate-500 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">Select All</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <label for="folder-image-upload" class="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-800 hover:bg-indigo-900 cursor-pointer">Upload</label>
+                        <input type="file" id="folder-image-upload" class="hidden" multiple>
+
+                        <div class="flex items-center space-x-4">
+                        <button id="folder-delete-btn" class="hidden px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Delete</button>
+                        <label for="select-all-folder-images-checkbox" class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="select-all-folder-images-checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">Select All</span>
+                        </label>
+                    </div>
                     </div>
                     <div id="folder-images-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2 rounded-lg bg-white dark:bg-slate-700">
                         <!-- Images from the selected folder will be dynamically inserted here -->
@@ -343,8 +356,8 @@
                             </select>
                         </div>
                         <div class="space-y-3">
-                            <button id="folder-generate-quiz-btn" disabled class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 disabled:bg-slate-400 disabled:cursor-not-allowed">Generate Quiz</button>
-                            <button id="folder-check-assignment-btn" disabled class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 disabled:bg-slate-400 disabled:cursor-not-allowed">Check Assignment</button>
+                            <button id="folder-generate-quiz-btn" disabled class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 disabled:bg-slate-400 disabled:cursor-not-allowed">Generate Quiz</button>
+                            <button id="folder-check-assignment-btn" disabled class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 disabled:bg-slate-400 disabled:cursor-not-allowed">Check Assignment</button>
                         </div>
                     </div>
                 </div>
@@ -416,6 +429,22 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 z-50 w-full max-w-sm relative text-center">
+            <h3 id="confirm-title" class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">Confirm Action</h3>
+            <p id="confirm-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="confirm-cancel-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    Cancel
+                </button>
+                <button id="confirm-ok-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <p id="toast-message"></p>
@@ -439,6 +468,8 @@
             collection,
             addDoc,
             getDocs,
+            doc,
+            deleteDoc,
             query,
             orderBy,
             serverTimestamp
@@ -446,6 +477,7 @@
         import { 
             getStorage,
             ref,
+            deleteObject,
             uploadString,
             getDownloadURL,
             uploadBytes
@@ -504,6 +536,7 @@
             const scoreMessage = document.getElementById('score-message');
             const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
             const retakeQuizBtn = document.getElementById('retake-quiz-btn');
+            const quizBackToFolderBtn = document.getElementById('quiz-back-to-folder-btn');
             const reviewAnswersBtn = document.getElementById('review-answers-btn');
             const backToResultsBtn = document.getElementById('back-to-results-btn');
             
@@ -544,6 +577,7 @@
             const loginTabBtn = document.getElementById('login-tab-btn');
             const signupPanel = document.getElementById('signup-panel');
             const loginPanel = document.getElementById('login-panel');
+            const homeLink = document.getElementById('home-link');
             const myFoldersLink = document.getElementById('my-folders-link');
             const usernameDisplay = document.getElementById('username-display');
             const menuBtn = document.getElementById('menu-btn');
@@ -555,10 +589,21 @@
             const alertMessage = document.getElementById('alert-message');
             const alertCloseBtn = document.getElementById('alert-close-btn');
 
+            // Confirmation Modal Elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const confirmOkBtn = document.getElementById('confirm-ok-btn');
+
             // Folder View Action Buttons
             const folderGenerateQuizBtn = document.getElementById('folder-generate-quiz-btn');
             const folderCheckAssignmentBtn = document.getElementById('folder-check-assignment-btn');
             const foldersBackBtn = document.getElementById('folders-back-btn');
+            const folderViewTitle = document.getElementById('folder-view-title');
+            const folderDeleteBtn = document.getElementById('folder-delete-btn');
+            const selectAllCheckbox = document.getElementById('select-all-folder-images-checkbox');
+            const folderImageUpload = document.getElementById('folder-image-upload');
 
             /**
              * Compares two strings to see if they represent numbers that are close enough.
@@ -586,6 +631,8 @@
         let selectedFolderId = null;
         let selectedFolderImages = [];
         let progressInterval = null;
+        let currentFlowOrigin = null; // Tracks if we started from a folder
+        let isMainPageFlow = true; // NEW: Central state for workflow
         
         function showToast(message) {
             toastMessage.textContent = message;
@@ -610,17 +657,25 @@
             loadingText.textContent = 'Saving to Folder...';
 
             const folderSelect = document.getElementById('folder-select');
-            const folderId = folderSelect.value;
+            const folderId = folderSelect.value || 'general'; // Fallback to general
 
             try {
                 const uploadPromises = imageDataArray.map(async (imgData) => {
-                    const imageRef = ref(storage, `users/${currentUserId}/uploads/${imgData.id}.jpg`);
-                    await uploadString(imageRef, imgData.thumbnailSrc, 'data_url');
+                    const isText = !!imgData.apiData.text;
+                    const extension = isText ? 'txt' : 'jpg';
+                    const storagePath = `users/${currentUserId}/uploads/${imgData.id}.${extension}`;
+                    const imageRef = ref(storage, storagePath);
+
+                    if (isText) {
+                        await uploadString(imageRef, imgData.apiData.text);
+                    } else {
+                        await uploadString(imageRef, imgData.thumbnailSrc, 'data_url');
+                    }
                     const downloadURL = await getDownloadURL(imageRef);
 
                     const itemsCol = collection(db, `users/${currentUserId}/folders/${folderId}/items`);
                     await addDoc(itemsCol, {
-                        type: 'image',
+                        mimeType: isText ? 'text/plain' : imgData.apiData.mimeType,
                         url: downloadURL,
                         createdAt: serverTimestamp()
                     });
@@ -651,15 +706,59 @@
             }
         });
         saveOnlyBtn.addEventListener('click', saveImagesToFolder);
-        generateQuizBtn.addEventListener('click', generateQuiz);
-        checkAssignmentBtn.addEventListener('click', checkAssignment);
+        generateQuizBtn.addEventListener('click', () => {
+            isMainPageFlow = true; generateQuiz(); 
+        });
+        checkAssignmentBtn.addEventListener('click', () => {
+            isMainPageFlow = true; checkAssignment();
+        });
         nextQuestionBtn.addEventListener('click', showNextQuestion);
         prevQuestionBtn.addEventListener('click', showPreviousQuestion);
         quizStartOverBtn.addEventListener('click', resetApp);
         retakeQuizBtn.addEventListener('click', retakeQuiz);
         reviewAnswersBtn.addEventListener('click', showReview);
         backToResultsBtn.addEventListener('click', showResults);
-        foldersBackBtn.addEventListener('click', resetApp);
+        quizBackToFolderBtn.addEventListener('click', () => {
+            if (currentFlowOrigin?.type === 'folder') openFolder(currentFlowOrigin.id);
+            else resetApp();
+        });
+        foldersBackBtn.addEventListener('click', () => {
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+            // If we are viewing the contents of a folder, go back to the folder list.
+            if (!folderContentsContainer.classList.contains('hidden')) {
+                showFoldersView(); // This function handles showing and populating the folder list
+            } else {
+                // Otherwise, go back to the main app screen.
+                resetApp();
+            }
+        });
+        selectAllCheckbox.addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+            const folderImagesGrid = document.getElementById('folder-images-grid');
+            const allThumbnails = folderImagesGrid.querySelectorAll('.folder-image-thumb');
+
+            if (isChecked) {
+                // Select all: add 'selected' class and collect all IDs
+                selectedFolderImages = Array.from(allThumbnails).map(thumb => {
+                    thumb.classList.add('selected');
+                    return thumb.dataset.imageId;
+                });
+            } else {
+                // Deselect all: remove 'selected' class and clear the array
+                allThumbnails.forEach(thumb => thumb.classList.remove('selected'));
+                selectedFolderImages = [];
+            }
+            updateFolderActionButtons();
+        });
+
+        folderDeleteBtn.addEventListener('click', deleteSelectedFolderItems);
+
+        // Wire up folder action buttons
+        folderGenerateQuizBtn.addEventListener('click', () => handleFolderAction('quiz'));
+        folderCheckAssignmentBtn.addEventListener('click', () => handleFolderAction('assignment'));
+
+        folderImageUpload.addEventListener('change', handleFolderImageUpload);
+
         assignmentStartOverBtn.addEventListener('click', resetApp);
 
         // Hamburger Menu Logic
@@ -679,6 +778,11 @@
             mobileMenu.classList.add('hidden'); // Close the menu on navigation
             showFoldersView();
         });
+        
+        homeLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close menu
+            resetApp(); // Go to home screen
+        });
 
         // --- Auth & Modal Event Listeners ---
 
@@ -693,6 +797,31 @@
         };
 
         alertCloseBtn.addEventListener('click', hideAlert);
+
+        const showConfirmation = (title, message) => {
+            return new Promise((resolve) => {
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                confirmModal.classList.remove('hidden');
+
+                const handleConfirm = () => {
+                    confirmModal.classList.add('hidden');
+                    confirmOkBtn.removeEventListener('click', handleConfirm);
+                    confirmCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(true);
+                };
+
+                const handleCancel = () => {
+                    confirmModal.classList.add('hidden');
+                    confirmOkBtn.removeEventListener('click', handleConfirm);
+                    confirmCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(false);
+                };
+
+                confirmOkBtn.addEventListener('click', handleConfirm);
+                confirmCancelBtn.addEventListener('click', handleCancel);
+            });
+        };
 
         const showLoginModal = (defaultToLogin = true) => {
             if (defaultToLogin) {
@@ -787,7 +916,7 @@
         });
 
         // Firebase Auth State Listener
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, async user => {
             if (user && !user.isAnonymous) {
                 // Logged-in user
                 currentUserId = user.uid;
@@ -798,7 +927,18 @@
                 saveOnlyBtn.classList.remove('hidden');
                 authHeader.classList.remove('hidden');
                 anonHeader.classList.add('hidden');
-                loadUserFolders();
+                await loadUserFolders();
+
+                // --- App State Restoration on Load (moved here) ---
+                const lastView = sessionStorage.getItem('currentView');
+                if (lastView === 'folders') {
+                    showFoldersView();
+                } else if (lastView && lastView.startsWith('folder-')) {
+                    const folderId = lastView.split('-')[1];
+                    await openFolder(folderId); // Open the specific folder directly
+                } else {
+                    resetApp(); // If no specific view, show the default upload view
+                }
             } else if (user && user.isAnonymous) {
                 // Anonymous user
                 folderSelectionContainer.classList.add('hidden');
@@ -851,7 +991,8 @@
         }
 
         function showFoldersView() {
-            console.log('Folders view clicked'); // For debugging
+            sessionStorage.setItem('currentView', 'folders');
+            folderViewTitle.textContent = 'My Folders'; // Reset title
             // Hide all other main views
             uploadState.classList.add('hidden');
             loadingState.classList.add('hidden');
@@ -879,11 +1020,11 @@
 
             userFolders.forEach(folder => {
                 const folderCard = document.createElement('button');
-                // Updated class list for a more visually appealing, themed card
-                folderCard.className = 'p-4 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all flex flex-col items-center justify-center aspect-square bg-indigo-800 text-white hover:bg-indigo-900';
+                // Changed to a more rectangular, horizontal layout
+                folderCard.className = 'p-3 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all flex flex-row items-center bg-indigo-800 text-white hover:bg-indigo-900';
                 folderCard.innerHTML = `
-                    <svg class="w-12 h-12 mb-2 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                    <span class="font-semibold text-center break-words">${folder.name}</span>
+                    <svg class="w-8 h-8 mr-3 flex-shrink-0 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    <span class="font-semibold text-left break-words w-full">${folder.name}</span>
                 `;
                 folderCard.onclick = () => openFolder(folder.id);
                 foldersListContainer.appendChild(folderCard);
@@ -891,12 +1032,31 @@
         }
 
         async function openFolder(folderId) {
+            if (!folderId) return;
+
+            // First, ensure the main folders view is set up correctly
+            uploadState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            resultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
+            foldersView.classList.remove('hidden');
+
+            // Now, set the session state for the specific folder
+            sessionStorage.setItem('currentView', `folder-${folderId}`);
+
             selectedFolderId = folderId;
             selectedFolderImages = []; // Reset selections when opening a new folder
 
+            document.getElementById('select-all-folder-images-checkbox').checked = false; // Reset checkbox
             const foldersListContainer = document.getElementById('folders-list-container');
             const folderContentsContainer = document.getElementById('folder-contents-container');
             const folderImagesGrid = document.getElementById('folder-images-grid');
+
+            // Set the folder title
+            const folderData = userFolders.find(f => f.id === folderId);
+            folderViewTitle.textContent = folderData ? folderData.name : 'Folder';
 
             // Switch from the folder list view to the folder contents view
             foldersListContainer.classList.add('hidden');
@@ -920,28 +1080,46 @@
 
                 itemsSnapshot.forEach(doc => {
                     const item = { id: doc.id, ...doc.data() };
-                    if (item.type === 'image') {
+                    if (item.url && item.createdAt) { // Check for url and timestamp
+                        const itemWrapper = document.createElement('div');
+                        itemWrapper.className = 'flex flex-col';
+
                         const thumbContainer = document.createElement('button');
-                        thumbContainer.className = 'folder-image-thumb relative aspect-square bg-slate-100 dark:bg-slate-600 rounded-md overflow-hidden transition-all duration-150';
+                        thumbContainer.className = 'folder-image-thumb relative aspect-square w-full bg-slate-100 dark:bg-slate-600 rounded-md overflow-hidden transition-all duration-150';
                         thumbContainer.dataset.imageId = item.id;
 
                         const img = document.createElement('img');
-                        img.src = item.url;
                         img.className = 'w-full h-full object-cover';
+                        
+                        // Use a generic icon for text files, otherwise use the image URL
+                        if (item.mimeType && item.mimeType.startsWith('text/')) {
+                            img.src = createFileTypeIcon("DOC");
+                        } else {
+                            img.src = item.url;
+                        }
                         thumbContainer.appendChild(img);
+                        itemWrapper.appendChild(thumbContainer);
+
+                        // Create and append the date stamp
+                        const date = item.createdAt.toDate();
+                        const formattedDate = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+                        const dateStamp = document.createElement('span');
+                        dateStamp.className = 'text-xs text-center text-slate-500 dark:text-slate-400 mt-1';
+                        dateStamp.textContent = formattedDate;
+                        itemWrapper.appendChild(dateStamp);
 
                         thumbContainer.addEventListener('click', () => {
                             thumbContainer.classList.toggle('selected');
                             const imageId = thumbContainer.dataset.imageId;
                             if (selectedFolderImages.includes(imageId)) {
                                 selectedFolderImages = selectedFolderImages.filter(id => id !== imageId);
+                                document.getElementById('select-all-folder-images-checkbox').checked = false; // Uncheck if one is deselected
                             } else {
                                 selectedFolderImages.push(imageId);
                             }
                             updateFolderActionButtons();
                         });
-
-                        folderImagesGrid.appendChild(thumbContainer);
+                        folderImagesGrid.appendChild(itemWrapper);
                     }
                 });
             } catch (error) {
@@ -951,18 +1129,174 @@
             }
         }
 
+        async function deleteSelectedFolderItems() { 
+            if (selectedFolderImages.length === 0) return;
+
+            const confirmed = await showConfirmation('Delete File(s)', `Are you sure you want to permanently delete ${selectedFolderImages.length} item(s)?`);
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Disable buttons to prevent double-clicks
+            folderDeleteBtn.disabled = true;
+            folderDeleteBtn.textContent = 'Deleting...';
+
+            const deletionPromises = selectedFolderImages.map(async (itemId) => {
+                try {
+                    // 1. Delete the Firestore document
+                    const itemDocRef = doc(db, `users/${currentUserId}/folders/${selectedFolderId}/items`, itemId);
+                    await deleteDoc(itemDocRef);
+
+                    // 2. Delete the file from Storage (This part is best-effort, as we don't store the full path)
+                    // We can try to reconstruct the path, but it's brittle. A better approach for the future
+                    // would be to store the storage path in Firestore. For now, we'll skip this to avoid errors.
+                    // A future implementation could use the download URL to get a storage reference if needed.
+
+                    // 3. Remove from the UI
+                    const thumbToRemove = document.querySelector(`.folder-image-thumb[data-image-id="${itemId}"]`);
+                    if (thumbToRemove) {
+                        thumbToRemove.parentElement.remove(); // Remove the wrapper div
+                    }
+                } catch (error) {
+                    console.error(`Failed to delete item ${itemId}:`, error);
+                    // We'll continue trying to delete the others
+                }
+            });
+
+            await Promise.all(deletionPromises);
+
+            showToast(`${selectedFolderImages.length} item(s) deleted.`);
+
+            // Reset selection state
+            selectedFolderImages = [];
+            document.getElementById('select-all-folder-images-checkbox').checked = false;
+            folderDeleteBtn.textContent = 'Delete';
+            updateFolderActionButtons(); // This will re-disable the buttons
+        }
+
+
         function updateFolderActionButtons() {
             const hasSelection = selectedFolderImages.length > 0;
             folderGenerateQuizBtn.disabled = !hasSelection;
             folderCheckAssignmentBtn.disabled = !hasSelection;
+            folderDeleteBtn.classList.toggle('hidden', !hasSelection);
+        }
+
+        async function handleFolderAction(action) {
+            if (selectedFolderImages.length === 0) return;
+            isMainPageFlow = false; // This is a folder action
+
+            // Set the origin so we know how to handle the results screen
+            currentFlowOrigin = { type: 'folder', id: selectedFolderId };
+
+            // Show loading state immediately
+            foldersView.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingText.textContent = 'Preparing files...';
+            startProgressBar();
+
+            try {
+                // 1. Prepare the data by fetching and converting files and get it back directly
+                const preparedData = await prepareDataForApi(selectedFolderImages);
+                if (!preparedData || preparedData.length === 0) {
+                    throw new Error("Could not prepare any of the selected files.");
+                }
+
+                // 2. Call the appropriate function
+                if (action === 'quiz') {
+                    const folderQuestionCount = document.getElementById('folder-question-count').value;
+                    questionCountSelect.value = folderQuestionCount; // Sync with main dropdown
+                    await generateQuiz(null, preparedData); // Pass the prepared data directly
+                } else if (action === 'assignment') {
+                    // Pass true to skip setup and also pass the prepared data
+                    await checkAssignment(preparedData);
+                }
+            } catch (error) {
+                console.error(`Error during folder action (${action}):`, error);
+                showAlert('Action Failed', 'Could not process the selected files. Please try again.');
+                resetApp(); // Reset on failure
+            }
+        }
+
+        async function prepareDataForApi(itemIds) {
+            const itemPromises = itemIds.map(async (itemId) => {
+                try {
+                    const itemDocRef = doc(db, `users/${currentUserId}/folders/${selectedFolderId}/items`, itemId);
+                    const itemDoc = await getDoc(itemDocRef);
+                    if (!itemDoc.exists()) return null;
+
+                    const itemData = itemDoc.data();
+                    // Instead of fetching the blob, just return the necessary info for the backend.
+                    // The backend will handle fetching the content from the URL.
+                    if (itemData.url) {
+                        return { url: itemData.url, mimeType: itemData.mimeType || 'image/jpeg', id: itemId };
+                    } 
+                    return null;
+                } catch (error) {
+                    console.error(`Failed to prepare item ${itemId}:`, error);
+                    return null;
+                }
+            });
+
+            return (await Promise.all(itemPromises)).filter(Boolean); // Return the prepared data
+        }
+
+        async function handleFolderImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0 || !selectedFolderId) return;
+
+            showToast(`Uploading ${files.length} file(s)...`);
+
+            const filePromises = Array.from(files).map(file => {
+                if (file.type.startsWith('image/')) {
+                    return processImageFile(file, 1024, 0.9);
+                } else if (file.name.endsWith('.docx')) {
+                    return processDocxFile(file);
+                } else {
+                    return processGenericFile(file);
+                }
+            });
+
+            const processedFiles = await Promise.all(filePromises);
+
+            const uploadPromises = processedFiles.map(async (fileData) => {
+                if (!fileData) return;
+
+                try {
+                    // Determine the storage path and upload method
+                    const storagePath = `users/${currentUserId}/uploads/${fileData.id}.${fileData.apiData.text ? 'txt' : 'jpg'}`;
+                    const fileRef = ref(storage, storagePath);
+
+                    if (fileData.apiData.text) { // It's a text file from .docx
+                        await uploadString(fileRef, fileData.apiData.text);
+                    } else { // It's an image or other file
+                        await uploadString(fileRef, fileData.thumbnailSrc, 'data_url');
+                    }
+
+                    const downloadURL = await getDownloadURL(fileRef);
+
+                    // Add the item to the current folder in Firestore
+                    const itemsCol = collection(db, `users/${currentUserId}/folders/${selectedFolderId}/items`);
+                    await addDoc(itemsCol, { 
+                        mimeType: fileData.apiData.text ? 'text/plain' : fileData.apiData.mimeType,
+                        url: downloadURL,
+                        createdAt: serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error(`Error uploading file ${fileData.id}:`, error);
+                }
+            });
+
+            await Promise.all(uploadPromises);
+            await openFolder(selectedFolderId); // Refresh the folder view to show the new files
+            showToast('Upload complete!');
         }
 
         function handleImageUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-
-            // Clear previous images when new ones are selected
-            // We don't clear here anymore, we clear before processing starts
+            imageDataArray = []; // Clear any previous uploads to prevent state conflicts
 
             // Show loading state immediately for better UX while images are processed
             uploadState.classList.add('hidden');
@@ -1048,33 +1382,27 @@
             }
         }
 
-        function commonApiSetup() {
-             if (imageDataArray.length === 0) {
-                alert('Please upload one or more images first.');
-                return false;
+        async function checkAssignment(dataOverride = null) { 
+            if (isMainPageFlow) { 
+                if (imageDataArray.length === 0) {
+                    alert('Please upload one or more images first.');
+                    return;
+                }
+                uploadState.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+                startProgressBar();
             }
-            // API key check is removed from here
-            uploadState.classList.add('hidden');
-            loadingState.classList.remove('hidden');
-            authHeader.parentElement.classList.add('hidden'); // Hide auth links
-            startProgressBar();
-            return true;
-        }
-        
-        async function checkAssignment() {
-            if (!commonApiSetup()) return;
+
             loadingText.textContent = "Checking Assignment...";
             
-            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) of a completed worksheet. For each question, provide a detailed analysis.
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) and/or text content. For each distinct question or topic you identify, provide a detailed analysis.
 
 Format your response using Markdown. For each question, create a single list item that contains the question, the student's visible answer, the correct answer, and an explanation. Use the following structure:
 
 - **Question [Number]:** (Describe the problem)
-  **Student's Answer:** (Perform a direct and literal transcription of the student's handwritten answer from the image. Do not calculate, interpret, or correct the answer in this field; transcribe it exactly as it appears. If the student's answer is not clearly visible or not applicable, state "Not visible" or "Not applicable".)
-  **Correct Answer:** (State the actual correct answer. IMPORTANT: For math problems, if the student has rounded their answer, your "Correct Answer" should also be rounded to the same number of decimal places, unless the worksheet instructions explicitly state otherwise. Similarly, if a student's answer is numerically correct but omits a descriptive word (e.g., writing "5" instead of "5 apples"), the "Correct Answer" should also be just the number "5" to ensure a fair comparison. Only include descriptive words if they are essential to the answer's correctness.)
-  **Explanation:** (Provide a clear, step-by-step, easy-to-understand explanation. If the student's answer was incorrect, gently explain why and how to arrive at the correct answer. Ensure the explanation implicitly clarifies if the student's answer was correct or incorrect by comparing it to the correct answer.)
-
-The goal is to help the student learn the underlying concepts.
+  **Student's Answer:** (Transcribe the student's answer exactly as it appears. If not visible, state "Not visible".)
+  **Correct Answer:** (State the actual correct answer. For math, match the student's rounding unless specified otherwise. For non-math, match the level of detail.)
+  **Explanation:** (Provide a clear, step-by-step explanation. Gently explain why an answer is incorrect and how to arrive at the correct one.)
 
 CRITICAL RULES:
 1.  Do NOT use any special formatting characters for math, like '$'.
@@ -1083,15 +1411,24 @@ CRITICAL RULES:
 4.  Keep explanations concise and as a single block of text, using line breaks for readability within the explanation, but avoid blank lines that would create new paragraphs.`;
 
             const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
-            
-            const parts = [ { text: userPrompt } ];
-            imageDataArray.forEach(data => {
-                if (data.apiData.text) {
-                    parts.push({ text: data.apiData.text }); // It's a text part
-                } else {
-                    parts.push({ inlineData: data.apiData }); // It's a file part
-                }
-            });
+
+            try {
+                const parts = [ { text: userPrompt } ];
+                // Use the override data if provided (from folder), otherwise use the global array
+                const dataToUse = dataOverride || imageDataArray;
+
+                // This was the source of the error. dataToUse could be null.
+                (dataToUse || []).forEach(data => {
+                    if (data.apiData && data.apiData.text) { // From main page upload (text)
+                        parts.push({ text: data.apiData.text }); // It's a text part
+                    } else if (data.apiData && data.apiData.mimeType) { // From main page upload (image)
+                        parts.push({ inlineData: data.apiData }); // It's a file part
+                    } else if (data.url) { // From folder view (URL)
+                        parts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
+                    } else {
+                        console.warn("Skipping unknown data part:", data);
+                    }
+                });
             
             const payload = {
                 contents: [{ parts: parts }],
@@ -1100,7 +1437,6 @@ CRITICAL RULES:
                 },
             };
             
-            try {
                 // Call our secure Netlify function
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
@@ -1189,6 +1525,16 @@ CRITICAL RULES:
                     authHeader.parentElement.classList.remove('hidden'); // Show auth links
                     assignmentResultsState.classList.remove('hidden');
 
+                    // Check if we came from a folder to customize the button
+                    if (currentFlowOrigin?.type === 'folder') {
+                        assignmentStartOverBtn.textContent = 'Back to Folder';
+                        // Re-wire the button to go back to the folder
+                        assignmentStartOverBtn.onclick = () => openFolder(currentFlowOrigin.id);
+                    } else {
+                        assignmentStartOverBtn.textContent = 'Start Over';
+                        assignmentStartOverBtn.onclick = resetApp;
+                    }
+
                     // Show save button if user is not fully logged in
                     if (auth.currentUser && !auth.currentUser.isAnonymous) {
                         saveAssignmentBtn.classList.add('hidden');
@@ -1200,33 +1546,35 @@ CRITICAL RULES:
                 }
             } catch (error) {
                 console.error("Error checking assignment:", error);
-                alert(`Failed to check assignment. ${error.message}. Please try again.`);
+                showAlert("Assignment Failed", `${error.message}. Please try again.`);
                 authHeader.parentElement.classList.remove('hidden'); // Show auth links on error
                 resetApp();
             }
         }
 
-        async function generateQuiz(previousQuestions = null) {
-            const promptText = customPrompt.value.trim();
-            if (imageDataArray.length === 0 && !promptText) {
-                alert('Please upload an image or type a quiz topic to begin.');
-                return;
+        async function generateQuiz(previousQuestions = null, dataOverride = null) { 
+            // Use the central state variable
+            if (isMainPageFlow) {
+                const promptText = customPrompt.value.trim();
+                if (imageDataArray.length === 0 && !promptText) {
+                    alert('Please upload an image or type a quiz topic to begin.');
+                    return;
+                }
+                uploadState.classList.add('hidden');
+                loadingState.classList.remove('hidden');
             }
-
-            uploadState.classList.add('hidden');
-            loadingState.classList.remove('hidden');
             authHeader.parentElement.classList.add('hidden'); // Hide auth links
             startProgressBar();
             loadingText.textContent = "Generating Quiz...";
             
             const questionCount = questionCountSelect.value;
 
-            let systemPrompt = `You are an expert curriculum designer. Your task is to analyze the provided images of a worksheet or study guide to understand the topics, concepts, and question formats. Based on this analysis, you must create a new set of multiple-choice questions that are *similar* in style and topic, but *not the same* as the ones in the images. The goal is to generate a fresh practice quiz that tests the same knowledge. The output must be a valid JSON object following this specific schema:
+            let systemPrompt = `You are an expert quiz creator. Your task is to analyze the provided image(s) and/or text to understand the topics and concepts present. Based on this analysis, create a set of multiple-choice questions. The output must be a valid JSON object following this specific schema:
 {"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
-IMPORTANT: Each question MUST have exactly 4 options in the 'options' array. Ensure the 'answer' field exactly matches one of the strings in the 'options' array. All text in the question, options, and answer fields should be plain text, without any special formatting characters like Markdown or LaTeX (e.g., avoid using '$'). Synthesize information across all provided images if necessary. If no images are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.
+IMPORTANT: Each question MUST have exactly 4 options. The 'answer' field must exactly match one of the strings in the 'options' array. All text should be plain text, without special formatting like Markdown or LaTeX. If no images/text are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.
 
 CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exact string match to one of the options provided. Do not leave it null or undefined. Respond ONLY with the JSON object.`;
-            let userPrompt = promptText ? promptText : `Analyze the concepts in the following image(s).`;
+            let userPrompt = isMainPageFlow && customPrompt.value.trim() ? customPrompt.value.trim() : `Analyze the content of the following image(s).`;
             userPrompt += ` Generate a practice quiz with ${questionCount} questions.`;
 
             if (previousQuestions && previousQuestions.length > 0) {
@@ -1235,11 +1583,18 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             }
             
             const parts = [ { text: userPrompt } ];
-            imageDataArray.forEach(data => {
-                if (data.apiData.text) {
+            // Use the override data if provided (from folder), otherwise use the global array
+            const dataToUse = dataOverride || imageDataArray;
+
+            dataToUse.forEach(data => {
+                if (data.apiData && data.apiData.text) { // From main page upload (text)
                     parts.push({ text: data.apiData.text }); // It's a text part
-                } else {
+                } else if (data.apiData && data.apiData.mimeType) { // From main page upload (image)
                     parts.push({ inlineData: data.apiData }); // It's a file part
+                } else if (data.url) { // From folder view (URL)
+                    parts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
+                } else {
+                    console.warn("Skipping unknown data part:", data);
                 }
             });
 
@@ -1253,13 +1608,13 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                 const responseText = await makeApiCall(payload);
                 if (responseText) {
                     // The model might return the JSON wrapped in markdown or with extra text.
-                    // We need to extract the raw JSON string before parsing.
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    // This regex looks for a JSON block, optionally wrapped in ```json ... ```
+                    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/);
                     if (!jsonMatch) {
                         console.error("Raw response from API:", responseText);
                         throw new Error("The AI response did not contain a valid JSON object.");
                     }
-                    const jsonString = jsonMatch[0];
+                    const jsonString = jsonMatch[1] || jsonMatch[2]; // Use the correct captured group
                     const parsedJson = JSON.parse(jsonString);
                     quizData = parsedJson.questions;
                     if (quizData && quizData.length > 0) {
@@ -1284,14 +1639,17 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
         function retakeQuiz() {
             // Hide the results screen before generating the new quiz
             resultsState.classList.add('hidden');
+            isMainPageFlow = true; // A retake always re-uses the main page data
 
             // Keep imageDataArray, but clear quiz-specific state
             const previousQuizData = [...quizData]; // Keep a copy of the old questions
             quizData = [];
-            userAnswers = [];
+            userAnswers = []; // Clear previous answers
             currentQuestionIndex = 0;
             score = 0;
-            generateQuiz(previousQuizData); // Call generateQuiz with the old questions
+            // Call generateQuiz with the old questions. The data source will be the
+            // existing global imageDataArray, which is correct for a retake.
+            generateQuiz(previousQuizData); 
         }
 
         function startProgressBar() {
@@ -1355,6 +1713,7 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             loadingState.classList.add('hidden');
             quizState.classList.remove('hidden');
             currentQuestionIndex = 0;
+            userAnswers = []; // Clear answers for a fresh quiz
             score = 0;
             displayQuestion();
         }
@@ -1510,21 +1869,35 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             // Also ensure review state is hidden if we come back to results
             reviewState.classList.add('hidden');
 
-            // Show the save button only if the user is logged in (not anonymous)
-            if (auth.currentUser && !auth.currentUser.isAnonymous) {
-                saveQuizBtn.classList.remove('hidden');
-            } else {
+            // Customize buttons based on where the quiz was started
+            if (currentFlowOrigin?.type === 'folder') {
+                // Came from a folder: show "Back to Folder", hide others
                 saveQuizBtn.classList.add('hidden');
+                quizStartOverBtn.classList.add('hidden');
+                quizBackToFolderBtn.classList.remove('hidden');
+            } else {
+                // Normal flow: show "Start Over" and "Save" (if logged in), hide "Back to Folder"
+                quizStartOverBtn.classList.remove('hidden');
+                quizBackToFolderBtn.classList.add('hidden');
+                // Show the save button only if the user is logged in (not anonymous)
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                saveQuizBtn.classList.remove('hidden');
+                } else {
+                saveQuizBtn.classList.add('hidden');
+                }
             }
         }
         
         function resetApp() {
+            sessionStorage.removeItem('currentView');
             imageDataArray = [];
             quizData = [];
             userAnswers = [];
             currentQuestionIndex = 0;
             score = 0;
             clearInterval(progressInterval);
+            currentFlowOrigin = null; // Reset the flow origin
+            isMainPageFlow = true; // Default back to main page flow on reset
 
             multiImagePreviewContainer.innerHTML = '';
             multiImagePreviewContainer.classList.add('hidden');
@@ -1549,6 +1922,10 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             customPrompt.value = '';
 
             resultsState.classList.add('hidden');
+            // Reset assignment button to its default state
+            assignmentStartOverBtn.textContent = 'Start Over';
+            assignmentStartOverBtn.onclick = resetApp;
+
             assignmentResultsState.classList.add('hidden');
             reviewState.classList.add('hidden');
             loadingState.classList.add('hidden');
@@ -1672,7 +2049,7 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                     <path d="M20 8 L52 8 L64 20 L64 72 L20 72 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"></path>
                     <path d="M52 8 L52 20 L64 20 Z" fill="#cbd5e1"></path>
                     <text x="42" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="bold" fill="#1e293b" text-anchor="middle">${extension}</text>
-                </svg>
+                </svg> 
             `;
             // We need to properly encode the SVG for use in a data URL.
             return `data:image/svg+xml;base64,${btoa(svg)}`;
