@@ -136,8 +136,8 @@
 </head>
 <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
 
-    <nav class="w-full bg-indigo-800 shadow-md p-2 fixed top-0 left-0 z-50">
-        <div class="w-full flex justify-between items-center md:max-w-5xl mx-auto px-4">
+    <nav class="w-full bg-indigo-800 shadow-md fixed top-0 left-0 z-50">
+        <div class="w-full flex justify-between items-center md:max-w-5xl mx-auto px-4 h-16">
         <!-- Logo/Title on the left -->
         <div></div>
 
@@ -148,7 +148,7 @@
                 <span class="text-white font-medium ml-2">|</span>
                 <a id="signup-link" class="text-white font-medium cursor-pointer ml-2">Sign Up</a>
             </div>
-            <div id="auth-header" class="hidden items-center">
+            <div id="auth-header" class="hidden flex items-center">
                 <span id="username-display" class="font-medium text-white mr-4"></span>
                 <div class="relative inline-block text-left">
                     <button id="menu-btn" class="p-2 rounded-full hover:bg-indigo-700 transition-colors"><svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
@@ -261,6 +261,9 @@
                 <p id="feedback-text" class="mt-4 font-semibold text-center"></p>
                 <button id="next-question-btn" class="mt-6 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hidden">
                     Next Question
+                </button>
+                <button id="quit-quiz-btn" class="mt-6 block mx-auto w-fit px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                    Quit
                 </button>
             </div>
 
@@ -531,6 +534,7 @@
             const feedbackText = document.getElementById('feedback-text');
             const nextQuestionBtn = document.getElementById('next-question-btn');
             const prevQuestionBtn = document.getElementById('prev-question-btn');
+            const quitQuizBtn = document.getElementById('quit-quiz-btn');
             const progressText = document.getElementById('progress-text');
             
             const scoreText = document.getElementById('score-text');
@@ -710,6 +714,7 @@
         generateQuizBtn.addEventListener('click', () => {
             isMainPageFlow = true; generateQuiz(); 
         });
+        quitQuizBtn.addEventListener('click', handleQuitQuiz);
         checkAssignmentBtn.addEventListener('click', () => {
             isMainPageFlow = true; checkAssignment();
         });
@@ -760,7 +765,7 @@
 
         folderImageUpload.addEventListener('change', handleFolderImageUpload);
 
-        assignmentStartOverBtn.addEventListener('click', resetApp);
+        assignmentStartOverBtn.onclick = resetApp;
 
         // Hamburger Menu Logic
         menuBtn.addEventListener('click', (event) => {
@@ -799,10 +804,11 @@
 
         alertCloseBtn.addEventListener('click', hideAlert);
 
-        const showConfirmation = (title, message) => {
+        const showConfirmation = (title, message, confirmText = 'Delete') => {
             return new Promise((resolve) => {
                 confirmTitle.textContent = title;
                 confirmMessage.textContent = message;
+                confirmOkBtn.textContent = confirmText;
                 confirmModal.classList.remove('hidden');
 
                 const handleConfirm = () => {
@@ -1233,8 +1239,6 @@
                     if (!itemDoc.exists()) return null;
 
                     const itemData = itemDoc.data();
-                    // Instead of fetching the blob, just return the necessary info for the backend.
-                    // The backend will handle fetching the content from the URL.
                     if (itemData.url) {
                         return { url: itemData.url, mimeType: itemData.mimeType || 'image/jpeg', id: itemId };
                     } 
@@ -1367,6 +1371,17 @@
                 alert("There was an error processing your images. Please try again.");
                 resetApp();
             });
+        }
+
+        async function handleQuitQuiz() {
+            const confirmed = await showConfirmation("Quit Quiz", "Are you sure you want to quit? Your progress will be lost.", "Quit");
+            if (confirmed) {
+                if (currentFlowOrigin?.type === 'folder') {
+                    openFolder(currentFlowOrigin.id);
+                } else {
+                    resetApp();
+                }
+            }
         }
 
         function removeImage(imageId) {
