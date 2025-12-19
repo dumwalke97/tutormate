@@ -865,7 +865,10 @@
 
         // Handle Sign Out
         signoutBtn.addEventListener('click', () => {
-            signOut(auth).catch(error => {
+            signOut(auth).then(() => {
+                resetApp();
+                mobileMenu.classList.add('hidden');
+            }).catch(error => {
                 console.error("Sign out error:", error);
                 alert("Failed to sign out. Please try again.");
             });
@@ -1054,6 +1057,7 @@
             reviewState.classList.add('hidden');
             assignmentResultsState.classList.add('hidden');
             foldersView.classList.remove('hidden');
+            authHeader.parentElement.classList.remove('hidden');
 
             // Now, set the session state for the specific folder
             sessionStorage.setItem('currentView', `folder-${folderId}`);
