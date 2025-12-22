@@ -667,12 +667,18 @@
             try {
                 const uploadPromises = imageDataArray.map(async (imgData) => {
                     const isText = !!imgData.apiData.text;
-                    const extension = isText ? 'txt' : 'jpg';
+                    let extension = 'jpg';
+                    if (isText) extension = 'txt';
+                    else if (imgData.apiData.mimeType === 'application/pdf') extension = 'pdf';
+
                     const storagePath = `users/${currentUserId}/uploads/${imgData.id}.${extension}`;
                     const imageRef = ref(storage, storagePath);
 
                     if (isText) {
                         await uploadString(imageRef, imgData.apiData.text);
+                    } else if (imgData.apiData.data) {
+                        const fullDataUrl = `data:${imgData.apiData.mimeType};base64,${imgData.apiData.data}`;
+                        await uploadString(imageRef, fullDataUrl, 'data_url');
                     } else {
                         await uploadString(imageRef, imgData.thumbnailSrc, 'data_url');
                     }
@@ -1107,10 +1113,18 @@
                         const img = document.createElement('img');
                         img.className = 'w-full h-full object-cover';
                         
-                        // Use a generic icon for text files, otherwise use the image URL
-                        if (item.mimeType && item.mimeType.startsWith('text/')) {
-                            img.src = createFileTypeIcon("DOC");
+                        // Determine file type for thumbnail display
+                        const isPdf = item.mimeType === 'application/pdf';
+                        const isText = item.mimeType && item.mimeType.startsWith('text/');
+                        
+                        if (isPdf || isText) {
+                            let ext = "FILE";
+                            if (isPdf) ext = "PDF";
+                            else if (isText) ext = "DOC";
+                            img.src = createFileTypeIcon(ext);
                         } else {
+                            // Assume it's an image (or legacy item) and try to display it
+                            img.onerror = () => { img.src = createFileTypeIcon("FILE"); img.onerror = null; };
                             img.src = item.url;
                         }
                         thumbContainer.appendChild(img);
@@ -1188,6 +1202,7 @@
             selectedFolderImages = [];
             document.getElementById('select-all-folder-images-checkbox').checked = false;
             folderDeleteBtn.textContent = 'Delete';
+            folderDeleteBtn.disabled = false;
             updateFolderActionButtons(); // This will re-disable the buttons
         }
 
@@ -1279,12 +1294,19 @@
 
                 try {
                     // Determine the storage path and upload method
-                    const storagePath = `users/${currentUserId}/uploads/${fileData.id}.${fileData.apiData.text ? 'txt' : 'jpg'}`;
+                    let extension = 'jpg';
+                    if (fileData.apiData.text) extension = 'txt';
+                    else if (fileData.apiData.mimeType === 'application/pdf') extension = 'pdf';
+
+                    const storagePath = `users/${currentUserId}/uploads/${fileData.id}.${extension}`;
                     const fileRef = ref(storage, storagePath);
 
                     if (fileData.apiData.text) { // It's a text file from .docx
                         await uploadString(fileRef, fileData.apiData.text);
-                    } else { // It's an image or other file
+                    } else if (fileData.apiData.data) {
+                        const fullDataUrl = `data:${fileData.apiData.mimeType};base64,${fileData.apiData.data}`;
+                        await uploadString(fileRef, fullDataUrl, 'data_url');
+                    } else { // Fallback
                         await uploadString(fileRef, fileData.thumbnailSrc, 'data_url');
                     }
 
