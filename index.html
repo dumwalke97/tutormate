@@ -940,7 +940,9 @@
                 usernameDisplay.textContent = user.displayName || user.email; // Show name or email
                 saveAssignmentBtn.classList.remove('hidden');
                 folderSelectionContainer.classList.remove('hidden');
-                saveOnlyBtn.classList.remove('hidden');
+                if (imageDataArray.length > 0) {
+                    saveOnlyBtn.classList.remove('hidden');
+                }
                 authHeader.classList.remove('hidden');
                 anonHeader.classList.add('hidden');
                 await loadUserFolders();
@@ -982,6 +984,7 @@
                 usernameDisplay.textContent = '';
                 // We do NOT automatically sign in anonymously anymore.
                 // This prevents creating "phantom" anonymous users in Firebase Console.
+                resetApp();
             }
         });
 
