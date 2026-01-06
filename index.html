@@ -1667,7 +1667,7 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                     let userPrompt = isMainPageFlow && customPrompt.value.trim() ? customPrompt.value.trim() : `Analyze the content of the following image(s).`;
                     userPrompt += ` Generate a practice quiz with ${batchCount} questions.`;
                     
-                    // Add randomness for multiple batches
+                    // Add randomness for multiple batches.
                     if (batches.length > 1) {
                         userPrompt += ` Focus on different aspects or details if possible (Batch ${index + 1}).`;
                     }
