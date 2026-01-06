@@ -638,6 +638,8 @@
         let progressInterval = null;
         let currentFlowOrigin = null; // Tracks if we started from a folder
         let isMainPageFlow = true; // NEW: Central state for workflow
+        let lastUsedQuestionCount = 10;
+        let lastUsedQuizData = null;
         
         function showToast(message) {
             toastMessage.textContent = message;
@@ -1247,8 +1249,7 @@
                 // 2. Call the appropriate function
                 if (action === 'quiz') {
                     const folderQuestionCount = document.getElementById('folder-question-count').value;
-                    questionCountSelect.value = folderQuestionCount; // Sync with main dropdown
-                    await generateQuiz(null, preparedData); // Pass the prepared data directly
+                    await generateQuiz(null, preparedData, folderQuestionCount); // Pass the prepared data and count directly
                 } else if (action === 'assignment') {
                     // Pass true to skip setup and also pass the prepared data
                     await checkAssignment(preparedData);
@@ -1609,7 +1610,7 @@ CRITICAL RULES:
             }
         }
 
-        async function generateQuiz(previousQuestions = null, dataOverride = null) { 
+        async function generateQuiz(previousQuestions = null, dataOverride = null, countOverride = null) { 
             // Use the central state variable
             if (isMainPageFlow) {
                 const promptText = customPrompt.value.trim();
@@ -1624,46 +1625,68 @@ CRITICAL RULES:
             startProgressBar();
             loadingText.textContent = "Generating Quiz...";
             
-            const questionCount = questionCountSelect.value;
+            const questionCount = parseInt(countOverride || questionCountSelect.value, 10);
+            lastUsedQuestionCount = questionCount;
 
-            let systemPrompt = `You are an expert quiz creator. Your task is to analyze the provided image(s) and/or text to understand the topics and concepts present. Based on this analysis, create a set of multiple-choice questions. The output must be a valid JSON object following this specific schema:
-{"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
-IMPORTANT: Each question MUST have exactly 4 options. The 'answer' field must exactly match one of the strings in the 'options' array. All text should be plain text, without special formatting like Markdown or LaTeX. If no images/text are provided, generate the quiz based solely on the user's text prompt. Respond ONLY with the JSON object and nothing else.
-
-CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exact string match to one of the options provided. Do not leave it null or undefined. Respond ONLY with the JSON object.`;
-            let userPrompt = isMainPageFlow && customPrompt.value.trim() ? customPrompt.value.trim() : `Analyze the content of the following image(s).`;
-            userPrompt += ` Generate a practice quiz with ${questionCount} questions.`;
-
-            if (previousQuestions && previousQuestions.length > 0) {
-                const oldQuestionsString = JSON.stringify(previousQuestions.map(q => q.question));
-                userPrompt += ` IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
-            }
-            
-            const parts = [ { text: userPrompt } ];
-            // Use the override data if provided (from folder), otherwise use the global array
+            // Prepare Data Parts (Images/Text)
             const dataToUse = dataOverride || imageDataArray;
-
+            lastUsedQuizData = dataToUse;
+            
+            const mediaParts = [];
             dataToUse.forEach(data => {
                 if (data.apiData && data.apiData.text) { // From main page upload (text)
-                    parts.push({ text: data.apiData.text }); // It's a text part
+                    mediaParts.push({ text: data.apiData.text });
                 } else if (data.apiData && data.apiData.mimeType) { // From main page upload (image)
-                    parts.push({ inlineData: data.apiData }); // It's a file part
+                    mediaParts.push({ inlineData: data.apiData });
                 } else if (data.url) { // From folder view (URL)
-                    parts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
-                } else {
-                    console.warn("Skipping unknown data part:", data);
+                    mediaParts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
                 }
             });
 
-            const payload = {
-                contents: [{ parts: parts }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-            
+            // Batching Configuration
+            const BATCH_SIZE = 20; // Process in chunks to avoid timeouts
+            const batches = [];
+            let remaining = questionCount;
+            while (remaining > 0) {
+                batches.push(Math.min(remaining, BATCH_SIZE));
+                remaining -= BATCH_SIZE;
+            }
+
+            let allGeneratedQuestions = [];
+
             try {
-                // Call our secure Netlify function
-                const responseText = await makeApiCall(payload);
-                if (responseText) {
+                const batchPromises = batches.map(async (batchCount, index) => {
+                    let systemPrompt = `You are an expert quiz creator. Your task is to analyze the provided image(s) and/or text to understand the topics and concepts present. Based on this analysis, create a set of multiple-choice questions. The output must be a valid JSON object following this specific schema:
+{"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
+IMPORTANT: Each question MUST have exactly 4 options. The 'answer' field must exactly match one of the strings in the 'options' array. All text should be plain text, without special formatting like Markdown or LaTeX. If no images/text are provided, generate the quiz based solely on the user's text prompt.
+
+STYLE: The questions must be derived directly from the provided content. However, phrase them as standalone questions. Do NOT use phrases like "In the image", "According to the text", or "As shown in the file". Instead of referencing the file, simply ask the question based on the facts or concepts presented in the material. Respond ONLY with the JSON object and nothing else.
+
+CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exact string match to one of the options provided. Do not leave it null or undefined. Respond ONLY with the JSON object.`;
+                    
+                    let userPrompt = isMainPageFlow && customPrompt.value.trim() ? customPrompt.value.trim() : `Analyze the content of the following image(s).`;
+                    userPrompt += ` Generate a practice quiz with ${batchCount} questions.`;
+                    
+                    // Add randomness for multiple batches
+                    if (batches.length > 1) {
+                        userPrompt += ` Focus on different aspects or details if possible (Batch ${index + 1}).`;
+                    }
+
+                    if (previousQuestions && previousQuestions.length > 0) {
+                        const oldQuestionsString = JSON.stringify(previousQuestions.map(q => q.question));
+                        userPrompt += ` IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
+                    }
+
+                    const parts = [{ text: userPrompt }, ...mediaParts];
+                    
+                    const payload = {
+                        contents: [{ parts: parts }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const responseText = await makeApiCall(payload);
+                    if (!responseText) throw new Error("Empty response from API");
+
                     // The model might return the JSON wrapped in markdown or with extra text.
                     // This regex looks for a JSON block, optionally wrapped in ```json ... ```
                     const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/);
@@ -1673,17 +1696,30 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                     }
                     const jsonString = jsonMatch[1] || jsonMatch[2]; // Use the correct captured group
                     const parsedJson = JSON.parse(jsonString);
-                    quizData = parsedJson.questions;
-                    if (quizData && quizData.length > 0) {
-                        completeProgressBar();
-                        // Don't show auth links yet, quiz is starting
-                        startQuiz();
-                    } else {
-                        throw new Error("The AI could not generate a quiz from this image.");
-                    }
-                } else {
-                     throw new Error("Invalid response structure from API.");
+                    return parsedJson.questions || [];
+                });
+
+                const results = await Promise.all(batchPromises);
+                results.forEach(qs => allGeneratedQuestions.push(...qs));
+
+                if (allGeneratedQuestions.length === 0) {
+                    throw new Error("The AI could not generate a quiz from this image.");
                 }
+
+                // Shuffle Options Logic (Fix for non-random answers)
+                allGeneratedQuestions.forEach(q => {
+                    const options = q.options;
+                    // Fisher-Yates shuffle
+                    for (let i = options.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [options[i], options[j]] = [options[j], options[i]];
+                    }
+                    // Note: q.answer is a string matching one of the options, so it remains valid after shuffle.
+                });
+
+                quizData = allGeneratedQuestions;
+                completeProgressBar();
+                startQuiz();
 
             } catch (error) {
                 console.error("Error generating quiz:", error);
@@ -1696,7 +1732,12 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
         function retakeQuiz() {
             // Hide the results screen before generating the new quiz
             resultsState.classList.add('hidden');
-            isMainPageFlow = true; // A retake always re-uses the main page data
+            
+            if (currentFlowOrigin?.type === 'folder') {
+                isMainPageFlow = false;
+            } else {
+                isMainPageFlow = true;
+            }
 
             // Keep imageDataArray, but clear quiz-specific state
             const previousQuizData = [...quizData]; // Keep a copy of the old questions
@@ -1704,9 +1745,8 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
             userAnswers = []; // Clear previous answers
             currentQuestionIndex = 0;
             score = 0;
-            // Call generateQuiz with the old questions. The data source will be the
-            // existing global imageDataArray, which is correct for a retake.
-            generateQuiz(previousQuizData); 
+            // Call generateQuiz with the old questions and cached settings
+            generateQuiz(previousQuizData, lastUsedQuizData, lastUsedQuestionCount); 
         }
 
         function startProgressBar() {
