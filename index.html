@@ -1290,7 +1290,7 @@
 
             const filePromises = Array.from(files).map(file => {
                 if (file.type.startsWith('image/')) {
-                    return processImageFile(file, 1024, 0.9);
+                    return processImageFile(file, 800, 0.7); // Reduced size/quality for faster uploads
                 } else if (file.name.endsWith('.docx')) {
                     return processDocxFile(file);
                 } else {
@@ -1343,7 +1343,6 @@
         function handleImageUpload(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            imageDataArray = []; // Clear any previous uploads to prevent state conflicts
 
             // Show loading state immediately for better UX while images are processed
             uploadState.classList.add('hidden');
@@ -1352,7 +1351,7 @@
 
             const filePromises = Array.from(files).map(file => {
                 if (file.type.startsWith('image/')) {
-                    return processImageFile(file, 1024, 0.9);
+                    return processImageFile(file, 800, 0.7); // Reduced size/quality for faster uploads
                 } else if (file.name.endsWith('.docx')) {
                     // Handle .docx files by extracting text
                     return processDocxFile(file);
@@ -1783,22 +1782,42 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
              let retries = 3;
              let delay = 1000;
              for (let i = 0; i < retries; i++) {
-                 // The URL is now our Netlify Function endpoint
-                 response = await fetch(`/.netlify/functions/generate`, {
-                     method: 'POST',
-                     headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify(payload)
-                 });
-                 if (response.ok) break;
-                 console.warn(`Request failed with status ${response.status}. Retrying in ${delay}ms...`);
+                 try {
+                     // The URL is now our Netlify Function endpoint
+                     response = await fetch(`/.netlify/functions/generate`, {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload)
+                     });
+                     if (response.ok) break;
+                     // Don't retry on client errors (4xx), only server errors (5xx)
+                     if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
+                 } catch (e) {
+                     console.warn("Network request failed:", e);
+                 }
+                 
+                 console.warn(`Request failed. Retrying in ${delay}ms...`);
                  await new Promise(res => setTimeout(res, delay));
                  delay *= 2;
              }
 
-             if (!response.ok) {
-                 const errorBody = await response.json();
-                 console.error("API call failed:", errorBody);
-                 throw new Error(errorBody.error || `API request failed with status ${response.status}`);
+             if (!response || !response.ok) {
+                 let errorMessage = response ? `API request failed with status ${response.status}` : "Network error: Could not connect to server.";
+                 if (response) {
+                     try {
+                         const errorText = await response.text();
+                         try {
+                             const errorJson = JSON.parse(errorText);
+                             if (errorJson.error) errorMessage = errorJson.error;
+                         } catch {
+                             // If not JSON, use the text if it's short (likely an error message)
+                             if (errorText && errorText.length < 200) errorMessage = errorText;
+                         }
+                     } catch (e) {
+                         console.error("Could not read error response:", e);
+                     }
+                 }
+                 throw new Error(errorMessage);
             }
              
              const result = await response.json();
