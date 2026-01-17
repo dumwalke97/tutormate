@@ -1,0 +1,21 @@
+{
+  "appId": "ai.tutormate.app",
+  "appName": "Tutor Mate",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "tutormate.ai",
+      "*.firebaseio.com",
+      "*.googleapis.com",
+      "*.google.com",
+      "*.gstatic.com"
+    ]
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

@@ -1,4 +1,5 @@
-[functions]
-  directory = "Netlify/Functions/"
+[build]
+  publish = "www"
+  functions = "Netlify/Functions"
 
 

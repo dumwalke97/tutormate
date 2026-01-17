@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Tutor Mate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script> <!-- Added for .docx parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added for Markdown parsing -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            /* Switched to a standard system font for better compatibility */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .font-playfair { /* Renamed to font-title for clarity, but keeping original for diff */
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800; /* ExtraBold */
+        }
+        .quiz-option.correct {
+            background-color: #22c55e !important; /* green-500 */
+            color: white !important;
+            border-color: #16a34a !important; /* green-600 */
+        }
+        .quiz-option.incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* red-600 */
+        }
+        /* Styles for the review section to avoid overriding icon colors */
+        #review-container .correct {
+            background-color: #dcfce7; /* green-100 */
+            border: 1px solid #22c55e; /* green-500 */
+        }
+        #review-container .incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border: 1px solid #ef4444; /* red-500 */
+        }
+        /* Simple fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        /* Thumbnail styling */
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb; /* gray-200 */
+        }
+        .dark .thumbnail {
+             border: 2px solid #475569; /* slate-600 */
+        }
+        .thumbnail-container {
+            position: relative;
+            display: inline-block;
+        }
+        .delete-btn {
+            position: absolute;
+            top: -12px;  /* Adjusted position for new size */
+            right: -12px; /* Adjusted position for new size */
+            background-color: #ef4444; /* red-500 */
+            color: white; 
+            border-radius: 9999px; /* full */
+            width: 32px;  /* Increased size for easier tapping */
+            height: 32px; /* Increased size for easier tapping */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            cursor: pointer;
+            line-height: 1; 
+            transition: background-color 0.2s ease-in-out;
+        }
+        .delete-btn:hover {
+            background-color: #dc2626; /* red-600 */
+        }
+        /* Style for assignment feedback */
+        #assignment-feedback-container {
+            white-space: pre-wrap; /* Allows text to wrap and respects newlines */
+            text-align: left;
+            background-color: #f8fafc; /* slate-50 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+            overflow-wrap: break-word; /* Added to prevent long words from breaking layout */
+        }
+        .dark #assignment-feedback-container {
+            background-color: #1e293b; /* slate-800 */
+        }
+        /* Styles for formatted assignment feedback */
+        #assignment-feedback-container ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #assignment-feedback-container li {
+            background-color: #f1f5f9; /* slate-100 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .dark #assignment-feedback-container li {
+            background-color: #334155; /* slate-700 */
+            border-color: #475569; /* slate-600 */
+        }
+        /* Reduce spacing inside the feedback cards */
+        #assignment-feedback-container li p {
+            margin-bottom: 0; /* Set to 0 to eliminate extra spacing between paragraphs */
+        }
+        #assignment-feedback-container li p:last-child {
+            margin-bottom: 0;
+        }
+        /* Styles for student's answer text color */
+        .answer-correct {
+            color: #22c55e; /* green-500 */
+        }
+        .answer-incorrect {
+            color: #ef4444; /* red-500 */
+        }
+        /* Style for selected images in the folder view */
+        .folder-image-thumb.selected {
+            outline: 3px solid #0ea5e9; /* sky-500 */
+            outline-offset: 2px;
+        }
+    </style>
+    <!-- Firebase SDKs will be loaded at the end of the body -->
+</head>
+<body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+
+    <nav class="w-full bg-indigo-800 shadow-md fixed top-0 left-0 z-50">
+        <div class="w-full flex justify-between items-center md:max-w-5xl mx-auto px-4 h-16">
+        <!-- Logo/Title on the left -->
+        <div></div>
+
+        <!-- Auth controls on the right -->
+        <div class="flex items-center">
+            <div id="anon-header" class="">
+                <a id="login-link" class="text-white font-medium cursor-pointer ml-4">Log In</a>
+                <span class="text-white font-medium ml-2">|</span>
+                <a id="signup-link" class="text-white font-medium cursor-pointer ml-2">Sign Up</a>
+            </div>
+            <div id="auth-header" class="hidden flex items-center">
+                <span id="username-display" class="font-medium text-white mr-4"></span>
+                <div class="relative inline-block text-left">
+                    <button id="menu-btn" class="p-2 rounded-full hover:bg-indigo-700 transition-colors"><svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
+                    <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <button id="home-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Home</button>
+                        <button id="my-folders-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">My Folders</button>
+                        <button id="signout-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <div class="p-4">
+        <div id="main-container" class="w-full max-w-md bg-slate-200 dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500 mx-auto mt-24">
+
+            <!-- Initial Upload State -->
+            <div id="upload-state" class="hidden">
+                <div class="text-center">
+                    <img src="Assets/TutorMateLogoTransparent.png" alt="Tutor Mate Logo" class="mx-auto w-28 md:w-32 mb-4">
+                    <p class="text-slate-500 dark:text-slate-400">Upload a worksheet to get started.</p>
+                </div>
+
+                <div id="multi-image-preview-container" class="mt-6 p-2 w-full bg-white dark:bg-slate-700 rounded-lg flex-wrap gap-3 justify-center border-2 border-dashed border-slate-400 dark:border-slate-600 hidden">
+                    <!-- Thumbnails will be added here -->
+                </div>
+                
+                <div class="mt-6 text-center" id="upload-prompt">
+                    <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.33-2.33 3 3 0 013.75 5.25" />
+                    </svg>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Upload files or use your camera</p>
+                </div>
+
+                <input type="file" id="image-upload" class="hidden" multiple>
+                
+                <label for="image-upload" id="upload-button" class="mt-6 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Add Images/Files</span>
+                </label>
+
+                <button id="check-assignment-btn" class="hidden mt-4 w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    Check Assignment
+                </button>
+
+                <div class="relative my-2">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-slate-300 dark:border-slate-600"></div></div>
+                    <div class="relative flex justify-center"><span class="bg-slate-200 dark:bg-slate-800 px-2 text-sm text-slate-500 dark:text-slate-400">Or</span></div>
+                </div>
+                
+                <div class="space-y-4">
+                     <div id="folder-selection-container" class="hidden mb-4">
+                        <label for="folder-select" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Save to Folder:</label>
+                        <select id="folder-select" name="folder-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
+                            <option value="general">General</option>
+                        </select>
+                        <button id="new-folder-btn" class="mt-2 px-4 py-2 border border-slate-300 dark:border-slate-500 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">New Folder</button>
+                    </div>
+                     <div>
+                        <label for="custom-prompt" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Create a quiz from a topic:</label>
+                        <textarea id="custom-prompt" name="custom-prompt" rows="3" class="mt-1 block w-full shadow-sm sm:text-sm border-2 border-slate-400 dark:bg-slate-700 dark:border-slate-600 rounded-md focus:ring-sky-500 focus:border-sky-500" placeholder="e.g., 'US State Capitals' or '10th Grade Biology Photosynthesis'"></textarea>
+                    </div>
+                    <div>
+                        <label for="question-count" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Number of Questions:</label>
+                        <select id="question-count" name="question-count" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
+                            <option>5</option>
+                            <option selected>10</option>
+                            <option>15</option>
+                            <option>20</option>
+                            <option>25</option>
+                            <option>30</option>
+                        </select>
+                    </div>
+
+                    <button id="generate-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        Generate Quiz
+                    </button>
+                    <button id="save-only-btn" class="hidden mt-3 w-full inline-flex items-center justify-center px-6 py-3 border-2 border-indigo-800 text-indigo-800 font-medium rounded-md shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200">
+                        Save to Folder Only
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="text-center p-8 hidden">
+                <div class="w-full bg-slate-300 rounded-full h-4 dark:bg-slate-700 mb-2">
+                    <div id="progress-bar" class="bg-sky-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-bar-text" class="text-sm font-semibold text-slate-600 dark:text-slate-400">0%</p>
+                <h2 id="loading-text" class="text-xl font-semibold mt-6">Generating Quiz...</h2>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">Please wait a moment.</p>
+            </div>
+
+            <!-- Quiz State -->
+            <div id="quiz-state" class="hidden">
+                <div class="relative flex justify-between items-center mb-4">
+                    <button id="prev-question-btn" class="absolute left-0 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors hidden">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <h2 class="text-xl font-bold text-center w-full">Quiz Time!</h2>
+                    <p id="progress-text" class="text-sm font-medium text-slate-500 dark:text-slate-400"></p>
+                </div>
+                <div id="question-container" class="fade-in">
+                    <p id="question-text" class="text-lg font-semibold mb-4"></p>
+                    <div id="options-container" class="grid grid-cols-1 gap-3">
+                        <!-- Options will be dynamically inserted here -->
+                    </div>
+                </div>
+                <p id="feedback-text" class="mt-4 font-semibold text-center"></p>
+                <button id="next-question-btn" class="mt-6 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hidden">
+                    Next Question
+                </button>
+                <button id="quit-quiz-btn" class="mt-6 block mx-auto w-fit px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                    Quit
+                </button>
+            </div>
+
+            <!-- Quiz Results State -->
+            <div id="results-state" class="text-center p-8 hidden fade-in">
+                <h2 class="text-2xl font-bold">Quiz Complete!</h2>
+                <p id="score-text" class="text-4xl font-extrabold text-sky-500 dark:text-sky-400 my-4"></p>
+                <p id="score-message" class="text-slate-500 dark:text-slate-400"></p>
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="review-answers-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        Review Answers
+                    </button>
+                    <button id="retake-quiz-btn" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        Retake Quiz
+                    </button>
+                    <button id="save-quiz-btn" class="hidden w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        Save to My Folders
+                    </button>
+                    <button id="quiz-back-to-folder-btn" class="hidden sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
+                        Back to Folder
+                    </button>
+                    <button id="quiz-start-over-btn" class="sm:col-span-2 w-full inline-flex items-center justify-center px-6 py-3 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
+                        Start Over
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Assignment Results State -->
+            <div id="assignment-results-state" class="p-4 hidden fade-in flex flex-col h-full">
+                <h2 class="text-2xl font-bold text-center mb-4">Assignment Feedback</h2>
+                <div id="assignment-feedback-container" class="border dark:border-slate-600"></div>
+                <button id="assignment-start-over-btn" class="mt-8 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    Start Over
+                </button>
+                <button id="save-assignment-btn" class="hidden mt-4 w-full px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                    Save to My Folders
+                </button>
+            </div>
+
+            <!-- Review State -->
+            <div id="review-state" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Review Answers</h2>
+                    <button id="back-to-results-btn" class="px-4 py-2 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
+                        Back to Results
+                    </button>
+                </div>
+                <div id="review-container" class="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Reviewed questions will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Folders View State -->
+            <div id="folders-view" class="hidden">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <button id="folders-back-btn" class="px-4 py-2 text-sm font-medium rounded-md text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors">
+                        &larr; Back
+                    </button>
+                    <h2 id="folder-view-title" class="text-2xl font-bold text-indigo-800 dark:text-indigo-400 truncate px-2">My Folders</h2>
+                    <div class="w-16"></div> <!-- Spacer for alignment -->
+                </div>
+
+                <!-- Folder List Container -->
+                <div id="folders-list-container" class="grid grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Folders will be dynamically inserted here -->
+                </div>
+
+                <!-- Folder Contents Container -->
+                <div id="folder-contents-container" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <label for="folder-image-upload" class="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-800 hover:bg-indigo-900 cursor-pointer">Upload</label>
+                        <input type="file" id="folder-image-upload" class="hidden" multiple>
+
+                        <div class="flex items-center space-x-4">
+                        <button id="folder-delete-btn" class="hidden px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Delete</button>
+                        <label for="select-all-folder-images-checkbox" class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="select-all-folder-images-checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm font-medium text-slate-700 dark:text-slate-300">Select All</span>
+                        </label>
+                    </div>
+                    </div>
+                    <div id="folder-images-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto p-2 rounded-lg bg-white dark:bg-slate-700">
+                        <!-- Images from the selected folder will be dynamically inserted here -->
+                    </div>
+
+                    <!-- Sticky Footer for Actions -->
+                    <div class="sticky bottom-0 bg-slate-200/80 dark:bg-slate-800/80 backdrop-blur-sm pt-4 -mx-8 px-8 pb-4 mt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <label for="folder-question-count" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Questions:</label>
+                            <select id="folder-question-count" name="folder-question-count" class="block w-1/2 pl-3 pr-10 py-2 text-base border-slate-400 dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm rounded-md">
+                                <option>5</option><option>10</option><option>15</option><option>20</option><option>25</option><option>30</option><option>50</option><option>100</option>
+                            </select>
+                        </div>
+                        <div class="space-y-3">
+                            <button id="folder-generate-quiz-btn" disabled class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 disabled:bg-slate-400 disabled:cursor-not-allowed">Generate Quiz</button>
+                            <button id="folder-check-assignment-btn" disabled class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 disabled:bg-slate-400 disabled:cursor-not-allowed">Check Assignment</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-8 text-center">
+            <p class="text-xs text-slate-400 dark:text-slate-500">&copy; 2025 Tutor Mate. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Login/Signup Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 z-50 w-full max-w-md relative">
+            
+            <h2 class="text-2xl font-bold text-center mb-6 text-slate-800 dark:text-slate-200">Log In or Sign Up to Save</h2>
+
+            <!-- Google Login -->
+            <button id="google-login-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-600 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all">
+                <svg class="w-5 h-5 mr-3" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8S109.8 11.6 244 11.6c70.3 0 129.8 27.8 174.3 71.9l-64.4 64.4c-23.7-22.2-56.8-35.9-95.9-35.9-83.5 0-151.8 68.3-151.8 151.8s68.3 151.8 151.8 151.8c97.2 0 130.3-72.8 134.8-110.2H244v-75.8h244z"></path></svg>
+                Continue with Google
+            </button>
+
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true"><div class="w-full border-t border-slate-300 dark:border-slate-600"></div></div>
+                <div class="relative flex justify-center"><span class="bg-white dark:bg-slate-800 px-2 text-sm text-slate-500 dark:text-slate-400">Or</span></div>
+            </div>
+
+            <!-- Tabs -->
+            <div>
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="signup-tab-btn" class="border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Sign Up</button>
+                        <button id="login-tab-btn" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Log In</button>
+                    </nav>
+                </div>
+
+                <!-- Sign Up Panel -->
+                <div id="signup-panel" class="space-y-4 mt-6">
+                    <input id="signup-email" type="email" placeholder="Email address" autocomplete="email" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <input id="signup-password" type="password" placeholder="Password" autocomplete="new-password" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <button id="email-signup-btn" type="button" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700">Sign Up</button>
+                </div>
+
+                <!-- Log In Panel -->
+                <div id="login-panel" class="hidden space-y-4 mt-6">
+                    <input id="login-email" type="email" placeholder="Email address" autocomplete="email" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <button id="email-login-btn" type="button" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700">Log In</button>
+                </div>
+            </div>
+
+            <!-- Cancel Button -->
+            <button id="cancel-login-btn" class="mt-6 w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Error/Alert Modal -->
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 z-50 w-full max-w-sm relative text-center">
+            <h3 id="alert-title" class="text-xl font-bold text-red-600 dark:text-red-500 mb-4"></h3>
+            <p id="alert-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <button id="alert-close-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-700">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 md:p-8 z-50 w-full max-w-sm relative text-center">
+            <h3 id="confirm-title" class="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4">Confirm Action</h3>
+            <p id="confirm-message" class="text-slate-600 dark:text-slate-300 mb-6"></p>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="confirm-cancel-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-slate-300 dark:border-slate-500 text-base font-medium rounded-md shadow-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    Cancel
+                </button>
+                <button id="confirm-ok-btn" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+        <p id="toast-message"></p>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { 
+            getAuth,
+            signInAnonymously,
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { 
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            getDoc,
+            doc,
+            deleteDoc,
+            query,
+            orderBy,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { 
+            getStorage,
+            ref,
+            deleteObject,
+            uploadString,
+            getDownloadURL,
+            uploadBytes
+        } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+
+        // --- App Initialization ---
+        let auth, db, storage;
+
+        function getBaseUrl() {
+            // Check if we are running in the native Capacitor environment
+            const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+            // If native, point to the live backend. If web, use relative path.
+            return isNative ? 'https://tutormate.ai' : '';
+        }
+
+        async function initializeAppAndServices() {
+            // Fetch the configuration from our Netlify function
+            const response = await fetch(getBaseUrl() + '/.netlify/functions/config');
+            const config = await response.json();
+
+            const firebaseConfig = {
+                apiKey: config.firebaseApiKey,
+                authDomain: config.firebaseAuthDomain,
+                projectId: config.firebaseProjectId,
+                storageBucket: config.firebaseStorageBucket,
+                messagingSenderId: config.firebaseMessagingSenderId,
+                appId: config.firebaseAppId,
+                measurementId: config.firebaseMeasurementId
+            };
+
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app);
+        }
+
+        // App State
+        initializeAppAndServices().then(() => {
+            // All app logic that depends on Firebase services goes here
+            
+            // DOM Elements (now defined inside the module)
+            const uploadState = document.getElementById('upload-state');
+            const loadingState = document.getElementById('loading-state');
+            const quizState = document.getElementById('quiz-state');
+            const resultsState = document.getElementById('results-state');
+            const reviewState = document.getElementById('review-state');
+            const reviewContainer = document.getElementById('review-container');
+            const foldersView = document.getElementById('folders-view');
+            const assignmentResultsState = document.getElementById('assignment-results-state');
+
+            const multiImagePreviewContainer = document.getElementById('multi-image-preview-container');
+            const imageUpload = document.getElementById('image-upload');
+            const uploadButtonLabel = document.querySelector('label[for="image-upload"] span');
+            
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const feedbackText = document.getElementById('feedback-text');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const prevQuestionBtn = document.getElementById('prev-question-btn');
+            const quitQuizBtn = document.getElementById('quit-quiz-btn');
+            const progressText = document.getElementById('progress-text');
+            
+            const scoreText = document.getElementById('score-text');
+            const scoreMessage = document.getElementById('score-message');
+            const quizStartOverBtn = document.getElementById('quiz-start-over-btn');
+            const retakeQuizBtn = document.getElementById('retake-quiz-btn');
+            const quizBackToFolderBtn = document.getElementById('quiz-back-to-folder-btn');
+            const reviewAnswersBtn = document.getElementById('review-answers-btn');
+            const backToResultsBtn = document.getElementById('back-to-results-btn');
+            
+            const assignmentFeedbackContainer = document.getElementById('assignment-feedback-container');
+            const assignmentStartOverBtn = document.getElementById('assignment-start-over-btn');
+            const generateQuizBtn = document.getElementById('generate-quiz-btn');
+            const checkAssignmentBtn = document.getElementById('check-assignment-btn');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const questionCountSelect = document.getElementById('question-count');
+            const loadingText = document.getElementById('loading-text');
+            const progressBar = document.getElementById('progress-bar');
+            const progressBarText = document.getElementById('progress-bar-text');
+            const customPrompt = document.getElementById('custom-prompt');
+            const saveAssignmentBtn = document.getElementById('save-assignment-btn');
+            const newFolderBtn = document.getElementById('new-folder-btn');
+            const folderSelectionContainer = document.getElementById('folder-selection-container');
+            const saveOnlyBtn = document.getElementById('save-only-btn');
+            const toastNotification = document.getElementById('toast-notification');
+            const toastMessage = document.getElementById('toast-message');
+
+            // Auth & Modal Elements
+            const anonHeader = document.getElementById('anon-header');
+            const authHeader = document.getElementById('auth-header');
+            const signoutBtn = document.getElementById('signout-btn');
+            const loginLink = document.getElementById('login-link');
+            const signupLink = document.getElementById('signup-link');
+            const saveQuizBtn = document.getElementById('save-quiz-btn');
+            const loginModal = document.getElementById('login-modal');
+            const cancelLoginBtn = document.getElementById('cancel-login-btn');
+            const googleLoginBtn = document.getElementById('google-login-btn');
+            const emailSignupBtn = document.getElementById('email-signup-btn');
+            const emailLoginBtn = document.getElementById('email-login-btn');
+            const signupEmail = document.getElementById('signup-email');
+            const signupPassword = document.getElementById('signup-password');
+            const loginEmail = document.getElementById('login-email');
+            const loginPassword = document.getElementById('login-password');
+            const signupTabBtn = document.getElementById('signup-tab-btn');
+            const loginTabBtn = document.getElementById('login-tab-btn');
+            const signupPanel = document.getElementById('signup-panel');
+            const loginPanel = document.getElementById('login-panel');
+            const homeLink = document.getElementById('home-link');
+            const myFoldersLink = document.getElementById('my-folders-link');
+            const usernameDisplay = document.getElementById('username-display');
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            // Alert Modal Elements
+            const alertModal = document.getElementById('alert-modal');
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            const alertCloseBtn = document.getElementById('alert-close-btn');
+
+            // Confirmation Modal Elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const confirmOkBtn = document.getElementById('confirm-ok-btn');
+
+            // Folder View Action Buttons
+            const folderGenerateQuizBtn = document.getElementById('folder-generate-quiz-btn');
+            const folderCheckAssignmentBtn = document.getElementById('folder-check-assignment-btn');
+            const foldersBackBtn = document.getElementById('folders-back-btn');
+            const folderViewTitle = document.getElementById('folder-view-title');
+            const folderDeleteBtn = document.getElementById('folder-delete-btn');
+            const selectAllCheckbox = document.getElementById('select-all-folder-images-checkbox');
+            const folderImageUpload = document.getElementById('folder-image-upload');
+
+            /**
+             * Compares two strings to see if they represent numbers that are close enough.
+             * Accounts for characters like '%' and rounding differences.
+             */
+            function areNumbersClose(str1, str2, tolerance = 0.01) {
+                const num1Match = str1.match(/[-+]?[0-9]*\.?[0-9]+/);
+                const num2Match = str2.match(/[-+]?[0-9]*\.?[0-9]+/);
+
+                if (num1Match && num2Match) {
+                    const num1 = parseFloat(num1Match[0]);
+                    const num2 = parseFloat(num2Match[0]);
+                    return Math.abs(num1 - num2) <= tolerance;
+                }
+                return false;
+            }
+
+            let imageDataArray = [];
+        let quizData = [];
+        let userAnswers = []; // To store the user's answers
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userFolders = [];
+        let currentUserId = null;
+        let selectedFolderId = null;
+        let selectedFolderImages = [];
+        let progressInterval = null;
+        let currentFlowOrigin = null; // Tracks if we started from a folder
+        let isMainPageFlow = true; // NEW: Central state for workflow
+        let lastUsedQuestionCount = 10;
+        let lastUsedQuizData = null;
+        
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastNotification.classList.remove('opacity-0', 'pointer-events-none');
+
+            setTimeout(() => {
+                toastNotification.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+
+
+        // The API key is REMOVED from the client-side code for security.
+        async function saveImagesToFolder() {
+            if (imageDataArray.length === 0) {
+                alert('Please upload an image first.');
+                return;
+            }
+
+            uploadState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingText.textContent = 'Saving to Folder...';
+
+            const folderSelect = document.getElementById('folder-select');
+            const folderId = folderSelect.value || 'general'; // Fallback to general
+
+            try {
+                const uploadPromises = imageDataArray.map(async (imgData) => {
+                    const isText = !!imgData.apiData.text;
+                    let extension = 'jpg';
+                    if (isText) extension = 'txt';
+                    else if (imgData.apiData.mimeType === 'application/pdf') extension = 'pdf';
+
+                    const storagePath = `users/${currentUserId}/uploads/${imgData.id}.${extension}`;
+                    const imageRef = ref(storage, storagePath);
+
+                    if (isText) {
+                        await uploadString(imageRef, imgData.apiData.text);
+                    } else if (imgData.apiData.data) {
+                        const fullDataUrl = `data:${imgData.apiData.mimeType};base64,${imgData.apiData.data}`;
+                        await uploadString(imageRef, fullDataUrl, 'data_url');
+                    } else {
+                        await uploadString(imageRef, imgData.thumbnailSrc, 'data_url');
+                    }
+                    const downloadURL = await getDownloadURL(imageRef);
+
+                    const itemsCol = collection(db, `users/${currentUserId}/folders/${folderId}/items`);
+                    await addDoc(itemsCol, {
+                        mimeType: isText ? 'text/plain' : imgData.apiData.mimeType,
+                        url: downloadURL,
+                        createdAt: serverTimestamp()
+                    });
+                });
+
+                await Promise.all(uploadPromises);
+
+                loadingState.classList.add('hidden');
+                uploadState.classList.remove('hidden');
+                showToast('Saved successfully to your folder!');
+                resetApp();
+            } catch (error) {
+                console.error("Error saving images to folder:", error);
+                showAlert("Save Failed", "There was an error saving your images. Please try again.");
+                resetApp();
+            }
+        }
+
+        // It now lives in the Netlify environment variables.
+
+        // Event Listeners
+        imageUpload.addEventListener('change', handleImageUpload);
+        newFolderBtn.addEventListener('click', async () => {
+            const folderName = prompt("Enter a name for the new folder:");
+            if (folderName && folderName.trim() !== "") {
+                await createNewFolder(folderName.trim());
+                await loadUserFolders(); // Refresh the folder list
+            }
+        });
+        saveOnlyBtn.addEventListener('click', saveImagesToFolder);
+        generateQuizBtn.addEventListener('click', () => {
+            isMainPageFlow = true; generateQuiz(); 
+        });
+        quitQuizBtn.addEventListener('click', handleQuitQuiz);
+        checkAssignmentBtn.addEventListener('click', () => {
+            isMainPageFlow = true; checkAssignment();
+        });
+        nextQuestionBtn.addEventListener('click', showNextQuestion);
+        prevQuestionBtn.addEventListener('click', showPreviousQuestion);
+        quizStartOverBtn.addEventListener('click', resetApp);
+        retakeQuizBtn.addEventListener('click', retakeQuiz);
+        reviewAnswersBtn.addEventListener('click', showReview);
+        backToResultsBtn.addEventListener('click', showResults);
+        quizBackToFolderBtn.addEventListener('click', () => {
+            if (currentFlowOrigin?.type === 'folder') openFolder(currentFlowOrigin.id);
+            else resetApp();
+        });
+        foldersBackBtn.addEventListener('click', () => {
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+            // If we are viewing the contents of a folder, go back to the folder list.
+            if (!folderContentsContainer.classList.contains('hidden')) {
+                showFoldersView(); // This function handles showing and populating the folder list
+            } else {
+                // Otherwise, go back to the main app screen.
+                resetApp();
+            }
+        });
+        selectAllCheckbox.addEventListener('change', (event) => {
+            const isChecked = event.target.checked;
+            const folderImagesGrid = document.getElementById('folder-images-grid');
+            const allThumbnails = folderImagesGrid.querySelectorAll('.folder-image-thumb');
+
+            if (isChecked) {
+                // Select all: add 'selected' class and collect all IDs
+                selectedFolderImages = Array.from(allThumbnails).map(thumb => {
+                    thumb.classList.add('selected');
+                    return thumb.dataset.imageId;
+                });
+            } else {
+                // Deselect all: remove 'selected' class and clear the array
+                allThumbnails.forEach(thumb => thumb.classList.remove('selected'));
+                selectedFolderImages = [];
+            }
+            updateFolderActionButtons();
+        });
+
+        folderDeleteBtn.addEventListener('click', deleteSelectedFolderItems);
+
+        // Wire up folder action buttons
+        folderGenerateQuizBtn.addEventListener('click', () => handleFolderAction('quiz'));
+        folderCheckAssignmentBtn.addEventListener('click', () => handleFolderAction('assignment'));
+
+        folderImageUpload.addEventListener('change', handleFolderImageUpload);
+
+        assignmentStartOverBtn.onclick = resetApp;
+
+        // Hamburger Menu Logic
+        menuBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent the window click listener from firing immediately
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close menu if clicked outside
+        document.addEventListener('click', (event) => {
+            if (!authHeader.contains(event.target)) {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+
+        myFoldersLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close the menu on navigation
+            showFoldersView();
+        });
+        
+        homeLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close menu
+            resetApp(); // Go to home screen
+        });
+
+        // --- Auth & Modal Event Listeners ---
+
+        const showAlert = (title, message) => {
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            alertModal.classList.remove('hidden');
+        };
+
+        const hideAlert = () => {
+            alertModal.classList.add('hidden');
+        };
+
+        alertCloseBtn.addEventListener('click', hideAlert);
+
+        const showConfirmation = (title, message, confirmText = 'Delete') => {
+            return new Promise((resolve) => {
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                confirmOkBtn.textContent = confirmText;
+                confirmModal.classList.remove('hidden');
+
+                const handleConfirm = () => {
+                    confirmModal.classList.add('hidden');
+                    confirmOkBtn.removeEventListener('click', handleConfirm);
+                    confirmCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(true);
+                };
+
+                const handleCancel = () => {
+                    confirmModal.classList.add('hidden');
+                    confirmOkBtn.removeEventListener('click', handleConfirm);
+                    confirmCancelBtn.removeEventListener('click', handleCancel);
+                    resolve(false);
+                };
+
+                confirmOkBtn.addEventListener('click', handleConfirm);
+                confirmCancelBtn.addEventListener('click', handleCancel);
+            });
+        };
+
+        const showLoginModal = (defaultToLogin = true) => {
+            if (defaultToLogin) {
+                showLoginTab();
+            } else {
+                showSignupTab();
+            }
+            loginModal.classList.remove('hidden');
+        };
+        const hideLoginModal = () => loginModal.classList.add('hidden');
+
+        const showLoginTab = () => {
+            loginPanel.classList.remove('hidden');
+            signupPanel.classList.add('hidden');
+            loginTabBtn.className = 'border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+            signupTabBtn.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+        };
+
+        const showSignupTab = () => {
+            signupPanel.classList.remove('hidden');
+            loginPanel.classList.add('hidden');
+            signupTabBtn.className = 'border-sky-500 text-sky-600 dark:text-sky-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+            loginTabBtn.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm';
+        };
+
+        // Show modal when login/signup/save is clicked
+        loginLink.addEventListener('click', () => showLoginModal(true)); // Default to login
+        signupLink.addEventListener('click', () => showLoginModal(false)); // Default to signup
+        saveQuizBtn.addEventListener('click', showLoginModal);
+        saveAssignmentBtn.addEventListener('click', showLoginModal);
+
+        // Hide modal on cancel
+        cancelLoginBtn.addEventListener('click', hideLoginModal);
+
+        // Handle Sign Out
+        signoutBtn.addEventListener('click', () => {
+            signOut(auth).then(() => {
+                resetApp();
+                mobileMenu.classList.add('hidden');
+            }).catch(error => {
+                console.error("Sign out error:", error);
+                alert("Failed to sign out. Please try again.");
+            });
+        });
+
+        // Handle Google Sign In
+        googleLoginBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    // const credential = GoogleAuthProvider.credentialFromResult(result);
+                    // const token = credential.accessToken;
+                    // const user = result.user;
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                }).catch((error) => {
+                    console.error("Google sign-in error:", error);
+                    showAlert("Login Failed", "Could not sign in with Google. Please try again.");
+                });
+        });
+
+        // Handle Email/Password Sign Up
+        emailSignupBtn.addEventListener('click', () => {
+            const email = signupEmail.value;
+            const password = signupPassword.value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                })
+                .catch((error) => {
+                    showAlert("Sign Up Failed", error.message);
+                });
+        });
+
+        // Handle Email/Password Log In
+        emailLoginBtn.addEventListener('click', () => {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    hideLoginModal(); // onAuthStateChanged will handle the rest
+                })
+                .catch((error) => {
+                    showAlert("Login Failed", "The email or password you entered is incorrect. Please try again.");
+                });
+        });
+
+        // Handle Modal Tab Switching
+        signupTabBtn.addEventListener('click', () => {
+            showSignupTab();
+        });
+
+        loginTabBtn.addEventListener('click', () => {
+            showLoginTab();
+        });
+
+        // Firebase Auth State Listener
+        onAuthStateChanged(auth, async user => {
+            if (user && !user.isAnonymous) {
+                // Logged-in user
+                currentUserId = user.uid;
+                saveQuizBtn.classList.remove('hidden');
+                usernameDisplay.textContent = user.displayName || user.email; // Show name or email
+                saveAssignmentBtn.classList.remove('hidden');
+                folderSelectionContainer.classList.remove('hidden');
+                if (imageDataArray.length > 0) {
+                    saveOnlyBtn.classList.remove('hidden');
+                }
+                authHeader.classList.remove('hidden');
+                anonHeader.classList.add('hidden');
+                await loadUserFolders();
+
+                // --- App State Restoration on Load (moved here) ---
+                const lastView = sessionStorage.getItem('currentView');
+                if (lastView === 'folders') {
+                    showFoldersView();
+                } else if (lastView && lastView.startsWith('folder-')) {
+                    const folderId = lastView.split('-')[1];
+                    await openFolder(folderId); // Open the specific folder directly
+                } else {
+                    resetApp(); // If no specific view, show the default upload view
+                }
+            } else if (user && user.isAnonymous) {
+                // Anonymous user
+                folderSelectionContainer.classList.add('hidden');
+                currentUserId = user.uid;
+                anonHeader.classList.remove('hidden');
+                authHeader.classList.add('hidden');
+                saveQuizBtn.classList.add('hidden');
+                saveAssignmentBtn.classList.add('hidden');
+                saveOnlyBtn.classList.add('hidden');
+                usernameDisplay.textContent = ''; // Clear username
+                // If there's no specific view in the session, show the main upload page.
+                // This handles the case for a new anonymous user.
+                if (!sessionStorage.getItem('currentView')) {
+                    resetApp();
+                }
+            } else {
+                // Signed out state (Guest)
+                currentUserId = null;
+                folderSelectionContainer.classList.add('hidden');
+                anonHeader.classList.remove('hidden');
+                authHeader.classList.add('hidden');
+                saveQuizBtn.classList.add('hidden');
+                saveAssignmentBtn.classList.add('hidden');
+                saveOnlyBtn.classList.add('hidden');
+                usernameDisplay.textContent = '';
+                // We do NOT automatically sign in anonymously anymore.
+                // This prevents creating "phantom" anonymous users in Firebase Console.
+                resetApp();
+            }
+        });
+
+        async function createNewFolder(folderName) {
+            if (!currentUserId || !folderName) return;
+            try {
+                const foldersCol = collection(db, `users/${currentUserId}/folders`);
+                await addDoc(foldersCol, {
+                    name: folderName,
+                    createdAt: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("Error creating new folder:", error);
+                showAlert("Error", "Could not create new folder. Please try again.");
+            }
+        }
+
+        async function loadUserFolders() {
+            if (!currentUserId) return;
+            try {
+                const foldersCol = collection(db, `users/${currentUserId}/folders`);
+                const q = query(foldersCol, orderBy("createdAt", "desc"));
+                const folderSnapshot = await getDocs(q);
+                
+                userFolders = folderSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const folderSelect = document.getElementById('folder-select');
+                folderSelect.innerHTML = '<option value="general">General</option>'; // Reset but keep General
+                userFolders.forEach(folder => {
+                    folderSelect.innerHTML += `<option value="${folder.id}">${folder.name}</option>`;
+                });
+            } catch (error) {
+                console.error("Error loading user folders:", error);
+            }
+        }
+
+        function showFoldersView() {
+            sessionStorage.setItem('currentView', 'folders');
+            folderViewTitle.textContent = 'My Folders'; // Reset title
+            // Hide all other main views
+            uploadState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            resultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
+
+            // Show the main folders view
+            foldersView.classList.remove('hidden');
+
+            const foldersListContainer = document.getElementById('folders-list-container');
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+
+            // Ensure the folder list is visible and the contents are hidden
+            foldersListContainer.classList.remove('hidden');
+            folderContentsContainer.classList.add('hidden');
+
+            foldersListContainer.innerHTML = ''; // Clear previous content
+
+            if (userFolders.length === 0) {
+                foldersListContainer.innerHTML = `<p class="text-slate-500 dark:text-slate-400 text-center">You don't have any folders yet.</p>`;
+                return;
+            }
+
+            userFolders.forEach(folder => {
+                const folderCard = document.createElement('button');
+                // Changed to a more rectangular, horizontal layout
+                folderCard.className = 'p-3 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-all flex flex-row items-center bg-indigo-800 text-white hover:bg-indigo-900';
+                folderCard.innerHTML = `
+                    <svg class="w-8 h-8 mr-3 flex-shrink-0 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    <span class="font-semibold text-left break-words w-full">${folder.name}</span>
+                `;
+                folderCard.onclick = () => openFolder(folder.id);
+                foldersListContainer.appendChild(folderCard);
+            });
+        }
+
+        async function openFolder(folderId) {
+            if (!folderId) return;
+
+            // First, ensure the main folders view is set up correctly
+            uploadState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            resultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
+            assignmentResultsState.classList.add('hidden');
+            foldersView.classList.remove('hidden');
+            authHeader.parentElement.classList.remove('hidden');
+
+            // Now, set the session state for the specific folder
+            sessionStorage.setItem('currentView', `folder-${folderId}`);
+
+            selectedFolderId = folderId;
+            selectedFolderImages = []; // Reset selections when opening a new folder
+
+            document.getElementById('select-all-folder-images-checkbox').checked = false; // Reset checkbox
+            const foldersListContainer = document.getElementById('folders-list-container');
+            const folderContentsContainer = document.getElementById('folder-contents-container');
+            const folderImagesGrid = document.getElementById('folder-images-grid');
+
+            // Set the folder title
+            const folderData = userFolders.find(f => f.id === folderId);
+            folderViewTitle.textContent = folderData ? folderData.name : 'Folder';
+
+            // Switch from the folder list view to the folder contents view
+            foldersListContainer.classList.add('hidden');
+            folderContentsContainer.classList.remove('hidden');
+            folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 dark:text-slate-400 p-4">Loading images...</p>';
+
+            updateFolderActionButtons(); // Ensure buttons are disabled initially
+
+            try {
+                const itemsPath = `users/${currentUserId}/folders/${folderId}/items`;
+                const itemsCol = collection(db, itemsPath);
+                const q = query(itemsCol, orderBy("createdAt", "desc"));
+                const itemsSnapshot = await getDocs(q);
+
+                folderImagesGrid.innerHTML = ''; // Clear loading message
+
+                if (itemsSnapshot.empty) {
+                    folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-slate-500 dark:text-slate-400 p-4">This folder is empty.</p>';
+                    return;
+                }
+
+                itemsSnapshot.forEach(doc => {
+                    const item = { id: doc.id, ...doc.data() };
+                    if (item.url && item.createdAt) { // Check for url and timestamp
+                        const itemWrapper = document.createElement('div');
+                        itemWrapper.className = 'flex flex-col';
+
+                        const thumbContainer = document.createElement('button');
+                        thumbContainer.className = 'folder-image-thumb relative aspect-square w-full bg-slate-100 dark:bg-slate-600 rounded-md overflow-hidden transition-all duration-150';
+                        thumbContainer.dataset.imageId = item.id;
+
+                        const img = document.createElement('img');
+                        img.className = 'w-full h-full object-cover';
+                        
+                        // Determine file type for thumbnail display
+                        const isPdf = item.mimeType === 'application/pdf';
+                        const isText = item.mimeType && item.mimeType.startsWith('text/');
+                        
+                        if (isPdf || isText) {
+                            let ext = "FILE";
+                            if (isPdf) ext = "PDF";
+                            else if (isText) ext = "DOC";
+                            img.src = createFileTypeIcon(ext);
+                        } else {
+                            // Assume it's an image (or legacy item) and try to display it
+                            img.onerror = () => { img.src = createFileTypeIcon("FILE"); img.onerror = null; };
+                            img.src = item.url;
+                        }
+                        thumbContainer.appendChild(img);
+                        itemWrapper.appendChild(thumbContainer);
+
+                        // Create and append the date stamp
+                        const date = item.createdAt.toDate();
+                        const formattedDate = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+                        const dateStamp = document.createElement('span');
+                        dateStamp.className = 'text-xs text-center text-slate-500 dark:text-slate-400 mt-1';
+                        dateStamp.textContent = formattedDate;
+                        itemWrapper.appendChild(dateStamp);
+
+                        thumbContainer.addEventListener('click', () => {
+                            thumbContainer.classList.toggle('selected');
+                            const imageId = thumbContainer.dataset.imageId;
+                            if (selectedFolderImages.includes(imageId)) {
+                                selectedFolderImages = selectedFolderImages.filter(id => id !== imageId);
+                                document.getElementById('select-all-folder-images-checkbox').checked = false; // Uncheck if one is deselected
+                            } else {
+                                selectedFolderImages.push(imageId);
+                            }
+                            updateFolderActionButtons();
+                        });
+                        folderImagesGrid.appendChild(itemWrapper);
+                    }
+                });
+            } catch (error) {
+                console.error("Error opening folder:", error);
+                showAlert("Error", "Could not load the contents of this folder.");
+                folderImagesGrid.innerHTML = '<p class="col-span-full text-center text-red-500 p-4">Failed to load images.</p>';
+            }
+        }
+
+        async function deleteSelectedFolderItems() { 
+            if (selectedFolderImages.length === 0) return;
+
+            const confirmed = await showConfirmation('Delete File(s)', `Are you sure you want to permanently delete ${selectedFolderImages.length} item(s)?`);
+
+            if (!confirmed) {
+                return;
+            }
+
+            // Disable buttons to prevent double-clicks
+            folderDeleteBtn.disabled = true;
+            folderDeleteBtn.textContent = 'Deleting...';
+
+            const deletionPromises = selectedFolderImages.map(async (itemId) => {
+                try {
+                    // 1. Delete the Firestore document
+                    const itemDocRef = doc(db, `users/${currentUserId}/folders/${selectedFolderId}/items`, itemId);
+                    await deleteDoc(itemDocRef);
+
+                    // 2. Delete the file from Storage (This part is best-effort, as we don't store the full path)
+                    // We can try to reconstruct the path, but it's brittle. A better approach for the future
+                    // would be to store the storage path in Firestore. For now, we'll skip this to avoid errors.
+                    // A future implementation could use the download URL to get a storage reference if needed.
+
+                    // 3. Remove from the UI
+                    const thumbToRemove = document.querySelector(`.folder-image-thumb[data-image-id="${itemId}"]`);
+                    if (thumbToRemove) {
+                        thumbToRemove.parentElement.remove(); // Remove the wrapper div
+                    }
+                } catch (error) {
+                    console.error(`Failed to delete item ${itemId}:`, error);
+                    // We'll continue trying to delete the others
+                }
+            });
+
+            await Promise.all(deletionPromises);
+
+            showToast(`${selectedFolderImages.length} item(s) deleted.`);
+
+            // Reset selection state
+            selectedFolderImages = [];
+            document.getElementById('select-all-folder-images-checkbox').checked = false;
+            folderDeleteBtn.textContent = 'Delete';
+            folderDeleteBtn.disabled = false;
+            updateFolderActionButtons(); // This will re-disable the buttons
+        }
+
+
+        function updateFolderActionButtons() {
+            const hasSelection = selectedFolderImages.length > 0;
+            folderGenerateQuizBtn.disabled = !hasSelection;
+            folderCheckAssignmentBtn.disabled = !hasSelection;
+            folderDeleteBtn.classList.toggle('hidden', !hasSelection);
+        }
+
+        async function handleFolderAction(action) {
+            if (selectedFolderImages.length === 0) return;
+            isMainPageFlow = false; // This is a folder action
+
+            // Set the origin so we know how to handle the results screen
+            currentFlowOrigin = { type: 'folder', id: selectedFolderId };
+
+            // Show loading state immediately
+            foldersView.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingText.textContent = 'Preparing files...';
+            startProgressBar();
+
+            try {
+                // 1. Prepare the data by fetching and converting files and get it back directly
+                const preparedData = await prepareDataForApi(selectedFolderImages);
+                if (!preparedData || preparedData.length === 0) {
+                    throw new Error("Could not prepare any of the selected files.");
+                }
+
+                // 2. Call the appropriate function
+                if (action === 'quiz') {
+                    const folderQuestionCount = document.getElementById('folder-question-count').value;
+                    await generateQuiz(null, preparedData, folderQuestionCount); // Pass the prepared data and count directly
+                } else if (action === 'assignment') {
+                    // Pass true to skip setup and also pass the prepared data
+                    await checkAssignment(preparedData);
+                }
+            } catch (error) {
+                console.error(`Error during folder action (${action}):`, error);
+                showAlert('Action Failed', 'Could not process the selected files. Please try again.');
+                resetApp(); // Reset on failure
+            }
+        }
+
+        async function prepareDataForApi(itemIds) {
+            const itemPromises = itemIds.map(async (itemId) => {
+                try {
+                    const itemDocRef = doc(db, `users/${currentUserId}/folders/${selectedFolderId}/items`, itemId);
+                    const itemDoc = await getDoc(itemDocRef);
+                    if (!itemDoc.exists()) return null;
+
+                    const itemData = itemDoc.data();
+                    if (itemData.url) {
+                        return { url: itemData.url, mimeType: itemData.mimeType || 'image/jpeg', id: itemId };
+                    } 
+                    return null;
+                } catch (error) {
+                    console.error(`Failed to prepare item ${itemId}:`, error);
+                    return null;
+                }
+            });
+
+            return (await Promise.all(itemPromises)).filter(Boolean); // Return the prepared data
+        }
+
+        async function handleFolderImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0 || !selectedFolderId) return;
+
+            showToast(`Uploading ${files.length} file(s)...`);
+
+            const filePromises = Array.from(files).map(file => {
+                if (file.type.startsWith('image/')) {
+                    return processImageFile(file, 800, 0.7); // Reduced size/quality for faster uploads
+                } else if (file.name.endsWith('.docx')) {
+                    return processDocxFile(file);
+                } else {
+                    return processGenericFile(file);
+                }
+            });
+
+            const processedFiles = await Promise.all(filePromises);
+
+            const uploadPromises = processedFiles.map(async (fileData) => {
+                if (!fileData) return;
+
+                try {
+                    // Determine the storage path and upload method
+                    let extension = 'jpg';
+                    if (fileData.apiData.text) extension = 'txt';
+                    else if (fileData.apiData.mimeType === 'application/pdf') extension = 'pdf';
+
+                    const storagePath = `users/${currentUserId}/uploads/${fileData.id}.${extension}`;
+                    const fileRef = ref(storage, storagePath);
+
+                    if (fileData.apiData.text) { // It's a text file from .docx
+                        await uploadString(fileRef, fileData.apiData.text);
+                    } else if (fileData.apiData.data) {
+                        const fullDataUrl = `data:${fileData.apiData.mimeType};base64,${fileData.apiData.data}`;
+                        await uploadString(fileRef, fullDataUrl, 'data_url');
+                    } else { // Fallback
+                        await uploadString(fileRef, fileData.thumbnailSrc, 'data_url');
+                    }
+
+                    const downloadURL = await getDownloadURL(fileRef);
+
+                    // Add the item to the current folder in Firestore
+                    const itemsCol = collection(db, `users/${currentUserId}/folders/${selectedFolderId}/items`);
+                    await addDoc(itemsCol, { 
+                        mimeType: fileData.apiData.text ? 'text/plain' : fileData.apiData.mimeType,
+                        url: downloadURL,
+                        createdAt: serverTimestamp()
+                    });
+                } catch (error) {
+                    console.error(`Error uploading file ${fileData.id}:`, error);
+                }
+            });
+
+            await Promise.all(uploadPromises);
+            await openFolder(selectedFolderId); // Refresh the folder view to show the new files
+            showToast('Upload complete!');
+        }
+
+        function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            // Show loading state immediately for better UX while images are processed
+            uploadState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            loadingText.textContent = "Processing Images...";
+
+            const filePromises = Array.from(files).map(file => {
+                if (file.type.startsWith('image/')) {
+                    return processImageFile(file, 800, 0.7); // Reduced size/quality for faster uploads
+                } else if (file.name.endsWith('.docx')) {
+                    // Handle .docx files by extracting text
+                    return processDocxFile(file);
+                } else {
+                    // For other non-image files like PDF
+                    return processGenericFile(file);
+                }
+            });
+
+            Promise.all(filePromises).then(processedImages => {
+                processedImages.forEach(imgData => {
+                    if (imgData) { // fileData is { thumbnailSrc, apiData, id }
+                        imageDataArray.push(imgData); // Using the same array for all files
+
+                        // Create container for thumbnail and delete button
+                        const thumbContainer = document.createElement('div');
+                        thumbContainer.classList.add('thumbnail-container');
+                        thumbContainer.dataset.imageId = imgData.id;
+
+                        // Create image thumbnail
+                        const img = document.createElement('img');
+                        img.src = imgData.thumbnailSrc;
+                        img.classList.add('thumbnail');
+                        thumbContainer.appendChild(img);
+
+                        // Create delete button
+                        const deleteBtn = document.createElement('button');
+                        // Use a modern SVG 'X' icon
+                        deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" /></svg>`;
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.onclick = () => removeImage(imgData.id);
+                        thumbContainer.appendChild(deleteBtn);
+
+                        multiImagePreviewContainer.appendChild(thumbContainer);
+                    }
+                });
+
+                // Hide loading and show the upload state with previews
+                loadingState.classList.add('hidden');
+                uploadState.classList.remove('hidden');
+
+                multiImagePreviewContainer.classList.remove('hidden');
+                multiImagePreviewContainer.classList.add('flex');
+                checkAssignmentBtn.classList.remove('hidden');
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                    saveOnlyBtn.classList.remove('hidden');
+                }
+                uploadPrompt.classList.add('hidden'); // This hides the initial prompt
+                uploadButtonLabel.textContent = 'Add More Photos';
+
+            }).catch(error => {
+                console.error("Error processing images:", error);
+                alert("There was an error processing your images. Please try again.");
+                resetApp();
+            });
+        }
+
+        async function handleQuitQuiz() {
+            const confirmed = await showConfirmation("Quit Quiz", "Are you sure you want to quit? Your progress will be lost.", "Quit");
+            if (confirmed) {
+                if (currentFlowOrigin?.type === 'folder') {
+                    openFolder(currentFlowOrigin.id);
+                } else {
+                    resetApp();
+                }
+            }
+        }
+
+        function removeImage(imageId) {
+            // Remove from state
+            imageDataArray = imageDataArray.filter(img => img.id !== imageId);
+
+            // Remove from DOM
+            const thumbToRemove = multiImagePreviewContainer.querySelector(`[data-image-id="${imageId}"]`);
+            if (thumbToRemove) {
+                thumbToRemove.remove();
+            }
+
+            // If no images are left, revert to initial upload state
+            if (imageDataArray.length === 0) {
+                checkAssignmentBtn.classList.add('hidden');
+                saveOnlyBtn.classList.add('hidden');
+                uploadPrompt.classList.remove('hidden');
+                uploadButtonLabel.textContent = 'Add Photos';
+            }
+        }
+
+        async function checkAssignment(dataOverride = null) { 
+            if (isMainPageFlow) { 
+                if (imageDataArray.length === 0) {
+                    alert('Please upload one or more images first.');
+                    return;
+                }
+                uploadState.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+                startProgressBar();
+            }
+
+            loadingText.textContent = "Checking Assignment...";
+            
+            const systemPrompt = `You are a helpful and encouraging tutor. Your task is to analyze the provided image(s) and/or text content. For each distinct question or topic you identify, provide a detailed analysis.
+
+Format your response using Markdown. For each question, create a single list item that contains the question, the student's visible answer, the correct answer, and an explanation. Use the following structure:
+
+- **Question [Number]:** (Describe the problem)
+  **Student's Answer:** (Transcribe the student's answer exactly as it appears. If not visible, state "Not visible".)
+  **Correct Answer:** (State the actual correct answer. For math, match the student's rounding unless specified otherwise. For non-math, match the level of detail.)
+  **Explanation:** (Provide a clear, step-by-step explanation. Gently explain why an answer is incorrect and how to arrive at the correct one.)
+
+CRITICAL RULES:
+1.  Do NOT use any special formatting characters for math, like '$'.
+2.  Respond ONLY with plain text and Markdown lists.
+3.  Ensure your entire response is valid Markdown and starts with the first list item.
+4.  Keep explanations concise and as a single block of text, using line breaks for readability within the explanation, but avoid blank lines that would create new paragraphs.`;
+
+            const userPrompt = `Please check this assignment and provide the correct answers with explanations.`;
+
+            try {
+                const parts = [ { text: userPrompt } ];
+                // Use the override data if provided (from folder), otherwise use the global array
+                const dataToUse = dataOverride || imageDataArray;
+
+                // This was the source of the error. dataToUse could be null.
+                (dataToUse || []).forEach(data => {
+                    if (data.apiData && data.apiData.text) { // From main page upload (text)
+                        parts.push({ text: data.apiData.text }); // It's a text part
+                    } else if (data.apiData && data.apiData.mimeType) { // From main page upload (image)
+                        parts.push({ inlineData: data.apiData }); // It's a file part
+                    } else if (data.url) { // From folder view (URL)
+                        parts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
+                    } else {
+                        console.warn("Skipping unknown data part:", data);
+                    }
+                });
+            
+            const payload = {
+                contents: [{ parts: parts }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+            
+                // Call our secure Netlify function
+                const responseText = await makeApiCall(payload);
+                if (responseText) {
+                    // Clean up any stray '$' characters and convert Markdown to HTML
+                    let cleanedText = responseText.replace(/\$/g, '');
+
+                    // Split the response into blocks for each question (each list item)
+                    const questionBlocks = cleanedText.split('- **Question');
+
+                    const processedBlocks = questionBlocks
+                        .filter(block => block.trim()) // Filter out empty blocks
+                        .map(block => {
+                            const lines = block.split('\n');
+                            let studentAnswerText = '';
+                            let correctAnswerText = '';
+                            let studentAnswerLineIndex = -1;
+
+                            lines.forEach((line, index) => {
+                                if (line.includes('**Student\'s Answer:**')) {
+                                    studentAnswerText = line.replace('**Student\'s Answer:**', '').trim();
+                                    studentAnswerLineIndex = index;
+                                } else if (line.includes('**Correct Answer:**')) {
+                                    correctAnswerText = line.replace('**Correct Answer:**', '').trim();
+                                }
+                            });
+
+                            if (studentAnswerLineIndex !== -1 && studentAnswerText && correctAnswerText && studentAnswerText.toLowerCase() !== 'not visible' && studentAnswerText.toLowerCase() !== 'not applicable') {
+                                let processedAnswerHtml;
+                                
+                                // Use matchAll for a more robust way of parsing parts, which avoids issues with splitting on negative signs.
+                                // This regex finds a label (like "a)") and captures all text until the next label or the end of the string.
+                                // This is a safer regex that is less "greedy" and won't consume parts of the answer.
+                                const partFinderRegex = /([a-z]\)|\d+\.)([^a-z\d]*?)(?=[a-z]\)|\d+\.|$)/gi;
+                                    
+                                    const studentParts = [...studentAnswerText.matchAll(partFinderRegex)];
+                                    const correctParts = [...correctAnswerText.matchAll(partFinderRegex)];
+
+                                    let htmlParts = [];
+                                    // This logic now only runs if parts were successfully found and the counts match.
+                                    if (studentParts.length > 0 && studentParts.length === correctParts.length) { 
+                                        for (let i = 0; i < studentParts.length; i++) {
+                                            const studentMatch = studentParts[i];
+                                            const correctMatch = correctParts[i];
+
+                                            const label = studentMatch[1]; // e.g., "a)"
+                                            const studentPart = (studentMatch[2] || '').trim(); // e.g., "-11.2" or "George Washington"
+                                            const correctPart = (correctMatch[2] || '').trim();
+
+                                            // Check for numerical closeness first, then fall back to string comparison.
+                                            const isCorrect = areNumbersClose(studentPart, correctPart) || 
+                                                              studentPart.toLowerCase() === correctPart.toLowerCase();
+
+                                            const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
+
+                                            htmlParts.push(`<span class="${answerClass} font-bold">${label} ${studentPart}</span>`);
+                                        }
+                                        processedAnswerHtml = htmlParts.join(' ');
+                                }
+
+                                // If multi-part logic didn't run or didn't produce HTML, fall back to single-part logic.
+                                // This ensures single answers and mismatched multi-part answers are still processed.
+                                if (!processedAnswerHtml) {
+                                    const normalizedStudentAnswer = studentAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+                                    const normalizedCorrectAnswer = correctAnswerText.toLowerCase().replace(/\s+/g, ' ').trim();
+                                    
+                                    // Check for numerical closeness first, then fall back to string comparison.
+                                    const isCorrect = areNumbersClose(studentAnswerText, correctAnswerText) || 
+                                                      normalizedStudentAnswer === normalizedCorrectAnswer;
+                                    const answerClass = isCorrect ? 'answer-correct' : 'answer-incorrect';
+                                    processedAnswerHtml = `<span class="${answerClass} font-bold">${studentAnswerText}</span>`;
+                                }
+                                
+                                // Rebuild the line with the processed HTML
+                                lines[studentAnswerLineIndex] = `  **Student's Answer:** ${processedAnswerHtml}`;
+                            }
+
+                            return '- **Question' + lines.join('\n');
+                        })
+                        .join('');
+
+                    const finalHtmlContent = marked.parse(processedBlocks);
+
+                    assignmentFeedbackContainer.innerHTML = finalHtmlContent;
+                    completeProgressBar();
+                    loadingState.classList.add('hidden');
+                    authHeader.parentElement.classList.remove('hidden'); // Show auth links
+                    assignmentResultsState.classList.remove('hidden');
+
+                    // Check if we came from a folder to customize the button
+                    if (currentFlowOrigin?.type === 'folder') {
+                        assignmentStartOverBtn.textContent = 'Back to Folder';
+                        // Re-wire the button to go back to the folder
+                        assignmentStartOverBtn.onclick = () => openFolder(currentFlowOrigin.id);
+                    } else {
+                        assignmentStartOverBtn.textContent = 'Start Over';
+                        assignmentStartOverBtn.onclick = resetApp;
+                    }
+
+                    // Show save button if user is not fully logged in
+                    if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                        saveAssignmentBtn.classList.add('hidden');
+                    } else {
+                        saveAssignmentBtn.classList.remove('hidden');
+                    }
+                } else {
+                    throw new Error("The AI could not provide feedback for this assignment.");
+                }
+            } catch (error) {
+                console.error("Error checking assignment:", error);
+                showAlert("Assignment Failed", `${error.message}. Please try again.`);
+                authHeader.parentElement.classList.remove('hidden'); // Show auth links on error
+                resetApp();
+            }
+        }
+
+        async function generateQuiz(previousQuestions = null, dataOverride = null, countOverride = null) { 
+            // Use the central state variable
+            if (isMainPageFlow) {
+                const promptText = customPrompt.value.trim();
+                if (imageDataArray.length === 0 && !promptText) {
+                    alert('Please upload an image or type a quiz topic to begin.');
+                    return;
+                }
+                uploadState.classList.add('hidden');
+                loadingState.classList.remove('hidden');
+            }
+            authHeader.parentElement.classList.add('hidden'); // Hide auth links
+            startProgressBar();
+            loadingText.textContent = "Generating Quiz...";
+            
+            const questionCount = parseInt(countOverride || questionCountSelect.value, 10);
+            lastUsedQuestionCount = questionCount;
+
+            // Prepare Data Parts (Images/Text)
+            const dataToUse = dataOverride || imageDataArray;
+            lastUsedQuizData = dataToUse;
+            
+            const mediaParts = [];
+            dataToUse.forEach(data => {
+                if (data.apiData && data.apiData.text) { // From main page upload (text)
+                    mediaParts.push({ text: data.apiData.text });
+                } else if (data.apiData && data.apiData.mimeType) { // From main page upload (image)
+                    mediaParts.push({ inlineData: data.apiData });
+                } else if (data.url) { // From folder view (URL)
+                    mediaParts.push({ fileData: { fileUri: data.url, mimeType: data.mimeType } });
+                }
+            });
+
+            // Batching Configuration
+            const BATCH_SIZE = 20; // Process in chunks to avoid timeouts
+            const batches = [];
+            let remaining = questionCount;
+            while (remaining > 0) {
+                batches.push(Math.min(remaining, BATCH_SIZE));
+                remaining -= BATCH_SIZE;
+            }
+
+            let allGeneratedQuestions = [];
+
+            try {
+                const batchPromises = batches.map(async (batchCount, index) => {
+                    let systemPrompt = `You are an expert quiz creator. Your task is to analyze the provided image(s) and/or text to understand the topics and concepts present. Based on this analysis, create a set of multiple-choice questions. The output must be a valid JSON object following this specific schema:
+{"questions": [{"question": "...", "options": ["...", "...", "...", "..."], "answer": "..."}]}.
+IMPORTANT: Each question MUST have exactly 4 options. The 'answer' field must exactly match one of the strings in the 'options' array. All text should be plain text, without special formatting like Markdown or LaTeX. If no images/text are provided, generate the quiz based solely on the user's text prompt.
+
+STYLE: The questions must be derived directly from the provided content. However, phrase them as standalone questions. Do NOT use phrases like "In the image", "According to the text", or "As shown in the file". Instead of referencing the file, simply ask the question based on the facts or concepts presented in the material. Respond ONLY with the JSON object and nothing else.
+
+CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exact string match to one of the options provided. Do not leave it null or undefined. Respond ONLY with the JSON object.`;
+                    
+                    let userPrompt = isMainPageFlow && customPrompt.value.trim() ? customPrompt.value.trim() : `Analyze the content of the following image(s).`;
+                    userPrompt += ` Generate a practice quiz with ${batchCount} questions.`;
+                    
+                    // Add randomness for multiple batches.
+                    if (batches.length > 1) {
+                        userPrompt += ` Focus on different aspects or details if possible (Batch ${index + 1}).`;
+                    }
+
+                    if (previousQuestions && previousQuestions.length > 0) {
+                        const oldQuestionsString = JSON.stringify(previousQuestions.map(q => q.question));
+                        userPrompt += ` IMPORTANT: The new questions must be different from the following previously asked questions: ${oldQuestionsString}`;
+                    }
+
+                    const parts = [{ text: userPrompt }, ...mediaParts];
+                    
+                    const payload = {
+                        contents: [{ parts: parts }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const responseText = await makeApiCall(payload);
+                    if (!responseText) throw new Error("Empty response from API");
+
+                    // The model might return the JSON wrapped in markdown or with extra text.
+                    // This regex looks for a JSON block, optionally wrapped in ```json ... ```
+                    const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/);
+                    if (!jsonMatch) {
+                        console.error("Raw response from API:", responseText);
+                        throw new Error("The AI response did not contain a valid JSON object.");
+                    }
+                    const jsonString = jsonMatch[1] || jsonMatch[2]; // Use the correct captured group
+                    const parsedJson = JSON.parse(jsonString);
+                    return parsedJson.questions || [];
+                });
+
+                const results = await Promise.all(batchPromises);
+                results.forEach(qs => allGeneratedQuestions.push(...qs));
+
+                if (allGeneratedQuestions.length === 0) {
+                    throw new Error("The AI could not generate a quiz from this image.");
+                }
+
+                // Shuffle Options Logic (Fix for non-random answers)
+                allGeneratedQuestions.forEach(q => {
+                    const options = q.options;
+                    // Fisher-Yates shuffle
+                    for (let i = options.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [options[i], options[j]] = [options[j], options[i]];
+                    }
+                    // Note: q.answer is a string matching one of the options, so it remains valid after shuffle.
+                });
+
+                quizData = allGeneratedQuestions;
+                completeProgressBar();
+                startQuiz();
+
+            } catch (error) {
+                console.error("Error generating quiz:", error);
+                alert(`Failed to generate quiz. ${error.message}. Please try a clearer image.`);
+                authHeader.parentElement.classList.remove('hidden'); // Show auth links on error
+                resetApp();
+            }
+        }
+        
+        function retakeQuiz() {
+            // Hide the results screen before generating the new quiz
+            resultsState.classList.add('hidden');
+            
+            if (currentFlowOrigin?.type === 'folder') {
+                isMainPageFlow = false;
+            } else {
+                isMainPageFlow = true;
+            }
+
+            // Keep imageDataArray, but clear quiz-specific state
+            const previousQuizData = [...quizData]; // Keep a copy of the old questions
+            quizData = [];
+            userAnswers = []; // Clear previous answers
+            currentQuestionIndex = 0;
+            score = 0;
+            // Call generateQuiz with the old questions and cached settings
+            generateQuiz(previousQuizData, lastUsedQuizData, lastUsedQuestionCount); 
+        }
+
+        function startProgressBar() {
+            clearInterval(progressInterval); // Clear any existing interval
+            let progress = 0;
+            progressBar.style.width = '0%';
+            progressBarText.textContent = '0%';
+
+            progressInterval = setInterval(() => {
+                // This logic makes the bar move fast at the start and slow down near the end
+                if (progress < 60) {
+                    progress += Math.random() * 5;
+                } else if (progress < 90) {
+                    progress += Math.random() * 2;
+                } else if (progress < 99) {
+                    progress += 0.1;
+                }
+                
+                progress = Math.min(progress, 99); // Cap at 99% until complete
+                progressBar.style.width = `${progress}%`;
+                progressBarText.textContent = `${Math.floor(progress)}%`;
+            }, 200);
+        }
+
+        function completeProgressBar() {
+            clearInterval(progressInterval);
+            progressInterval = null;
+            progressBar.style.width = '100%';
+            progressBarText.textContent = '100%';
+        }
+        
+        async function makeApiCall(payload) {
+             let response;
+             let retries = 3;
+             let delay = 1000;
+             for (let i = 0; i < retries; i++) {
+                 try {
+                     // The URL is now our Netlify Function endpoint
+                     response = await fetch(getBaseUrl() + '/.netlify/functions/generate', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload)
+                     });
+                     if (response.ok) break;
+                     // Don't retry on client errors (4xx), only server errors (5xx)
+                     if (response.status >= 400 && response.status < 500 && response.status !== 429) break;
+                 } catch (e) {
+                     console.warn("Network request failed:", e);
+                 }
+                 
+                 console.warn(`Request failed. Retrying in ${delay}ms...`);
+                 await new Promise(res => setTimeout(res, delay));
+                 delay *= 2;
+             }
+
+             if (!response || !response.ok) {
+                 let errorMessage = response ? `API request failed with status ${response.status}` : "Network error: Could not connect to server.";
+                 if (response) {
+                     try {
+                         const errorText = await response.text();
+                         try {
+                             const errorJson = JSON.parse(errorText);
+                             if (errorJson.error) errorMessage = errorJson.error;
+                         } catch {
+                             // If not JSON, use the text if it's short (likely an error message)
+                             if (errorText && errorText.length < 200) errorMessage = errorText;
+                         }
+                     } catch (e) {
+                         console.error("Could not read error response:", e);
+                     }
+                 }
+                 throw new Error(errorMessage);
+            }
+             
+             const result = await response.json();
+             // The structure of the response from our function matches Gemini's
+             return result.candidates?.[0]?.content?.parts?.[0]?.text;
+        }
+
+        function startQuiz() {
+            loadingState.classList.add('hidden');
+            quizState.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            userAnswers = []; // Clear answers for a fresh quiz
+            score = 0;
+            displayQuestion();
+        }
+
+        function displayQuestion() {
+            // Clear previous state
+            optionsContainer.innerHTML = '';
+            feedbackText.textContent = '';
+
+            const question = quizData[currentQuestionIndex];
+            const userAnswer = userAnswers[currentQuestionIndex];
+
+            questionText.textContent = question.question;
+            progressText.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+
+            // Update button visibility
+            prevQuestionBtn.classList.toggle('hidden', currentQuestionIndex === 0);
+            nextQuestionBtn.textContent = (currentQuestionIndex === quizData.length - 1) ? 'Finish Quiz' : 'Next Question';
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('quiz-option', 'w-full', 'p-3', 'rounded-lg', 'border-2', 'border-slate-400', 'dark:border-slate-600', 'text-left', 'hover:bg-slate-100', 'dark:hover:bg-slate-700', 'transition-colors', 'duration-200');
+                
+                if (userAnswer !== undefined) { // If question has been answered
+                    button.disabled = true;
+                    if (option === question.answer) {
+                        button.classList.add('correct');
+                    }
+                    if (option === userAnswer && userAnswer !== question.answer) {
+                        button.classList.add('incorrect');
+                    }
+                } else { // New question
+                    button.addEventListener('click', () => handleAnswer(button, option, question.answer));
+                }
+                optionsContainer.appendChild(button);
+            });
+
+            if (userAnswer !== undefined) {
+                feedbackText.textContent = userAnswer === question.answer ? "Correct!" : `Incorrect. The correct answer was: ${question.answer}`;
+                feedbackText.className = `mt-4 font-semibold text-center ${userAnswer === question.answer ? 'text-green-500' : 'text-red-500'}`;
+                nextQuestionBtn.classList.remove('hidden');
+            } else {
+                nextQuestionBtn.classList.add('hidden');
+            }
+
+            document.getElementById('question-container').classList.remove('fade-in');
+            void document.getElementById('question-container').offsetWidth; // Trigger reflow
+            document.getElementById('question-container').classList.add('fade-in');
+        }
+
+        function handleAnswer(button, selectedOption, correctAnswer) {
+            const buttons = optionsContainer.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            userAnswers[currentQuestionIndex] = selectedOption; // Store the answer
+
+            if (selectedOption === correctAnswer) {
+                score++;
+                button.classList.add('correct');
+                feedbackText.textContent = "Correct!";
+                feedbackText.className = 'mt-4 font-semibold text-center text-green-500';
+            } else {
+                button.classList.add('incorrect');
+                feedbackText.textContent = `Incorrect. The correct answer was: ${correctAnswer}`;
+                feedbackText.className = 'mt-4 font-semibold text-center text-red-500';
+                buttons.forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            nextQuestionBtn.classList.remove('hidden');
+        }
+
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showPreviousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function showReview() {
+            resultsState.classList.add('hidden');
+            reviewState.classList.remove('hidden');
+            reviewContainer.innerHTML = ''; // Clear previous review
+
+            quizData.forEach((question, index) => {
+                const userAnswer = userAnswers[index] || "Not Answered"; // Handle case where a question might not be answered
+                const correctAnswer = question.answer;
+                const isCorrect = userAnswer === correctAnswer;
+
+                const questionWrapper = document.createElement('div');
+                questionWrapper.className = 'p-4 bg-white dark:bg-slate-700/50 rounded-lg shadow-sm';
+
+                const questionTitle = document.createElement('p');
+                questionTitle.className = 'font-semibold mb-3';
+                questionTitle.textContent = `Q${index + 1}: ${question.question}`;
+                questionWrapper.appendChild(questionTitle);
+
+                const userAnswerDiv = document.createElement('div');
+                userAnswerDiv.className = 'p-2 rounded-md text-sm flex items-center'; // Use flexbox for alignment
+
+                let iconHtml = '';
+
+                if (isCorrect) {
+                    userAnswerDiv.classList.add('correct'); // This class is now styled differently in the review container
+                    iconHtml = `<svg class="w-5 h-5 mr-2 flex-shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+                } else {
+                    userAnswerDiv.classList.add('incorrect'); // This class is now styled differently in the review container
+                    iconHtml = `<svg class="w-5 h-5 mr-2 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                }
+                
+                userAnswerDiv.innerHTML = `${iconHtml}<div><span class="font-bold">Your Answer:</span> ${userAnswer}</div>`;
+                questionWrapper.appendChild(userAnswerDiv);
+
+                if (!isCorrect) {
+                    const correctAnswerDiv = document.createElement('div');
+                    correctAnswerDiv.className = 'p-2 rounded-md text-sm mt-2 correct'; // This uses the new 'correct' style
+                    correctAnswerDiv.innerHTML = `<span class="font-bold">Correct Answer:</span> ${correctAnswer}`;
+                    questionWrapper.appendChild(correctAnswerDiv);
+                }
+
+                reviewContainer.appendChild(questionWrapper);
+            });
+
+            // Scroll the review container to the top
+            reviewContainer.scrollTop = 0;
+        }
+
+        function showResults() {
+            quizState.classList.add('hidden');
+            resultsState.classList.remove('hidden');
+            scoreText.textContent = `${score} / ${quizData.length}`;
+            const percentage = (score / quizData.length) * 100;
+            if (percentage >= 80) {
+                scoreMessage.textContent = "Great job! You aced it!";
+            } else if (percentage >= 50) {
+                scoreMessage.textContent = "Good effort! Keep practicing.";
+            } else {
+                scoreMessage.textContent = "Don't worry, try again!";
+            }
+            // Also ensure review state is hidden if we come back to results
+            reviewState.classList.add('hidden');
+
+            // Customize buttons based on where the quiz was started
+            if (currentFlowOrigin?.type === 'folder') {
+                // Came from a folder: show "Back to Folder", hide others
+                saveQuizBtn.classList.add('hidden');
+                quizStartOverBtn.classList.add('hidden');
+                quizBackToFolderBtn.classList.remove('hidden');
+            } else {
+                // Normal flow: show "Start Over" and "Save" (if logged in), hide "Back to Folder"
+                quizStartOverBtn.classList.remove('hidden');
+                quizBackToFolderBtn.classList.add('hidden');
+                // Show the save button only if the user is logged in (not anonymous)
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                saveQuizBtn.classList.remove('hidden');
+                } else {
+                saveQuizBtn.classList.add('hidden');
+                }
+            }
+        }
+        
+        function resetApp() {
+            sessionStorage.removeItem('currentView');
+            imageDataArray = [];
+            quizData = [];
+            userAnswers = [];
+            currentQuestionIndex = 0;
+            score = 0;
+            clearInterval(progressInterval);
+            currentFlowOrigin = null; // Reset the flow origin
+            isMainPageFlow = true; // Default back to main page flow on reset
+
+            multiImagePreviewContainer.innerHTML = '';
+            multiImagePreviewContainer.classList.add('hidden');
+            multiImagePreviewContainer.classList.remove('flex');
+            assignmentFeedbackContainer.textContent = '';
+
+            // Always hide these buttons on reset, as the image array is now empty.
+            checkAssignmentBtn.classList.add('hidden');
+            saveOnlyBtn.classList.add('hidden');
+
+            // Conditionally show/hide folder selection based on auth state.
+            if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                folderSelectionContainer.classList.remove('hidden');
+            } else {
+                folderSelectionContainer.classList.add('hidden');
+            }
+
+            uploadPrompt.classList.remove('hidden');
+            uploadButtonLabel.textContent = 'Add Images/Files';
+            imageUpload.value = ''; 
+            questionCountSelect.value = '10';
+            customPrompt.value = '';
+
+            resultsState.classList.add('hidden');
+            // Reset assignment button to its default state
+            assignmentStartOverBtn.textContent = 'Start Over';
+            assignmentStartOverBtn.onclick = resetApp;
+
+            assignmentResultsState.classList.add('hidden');
+            reviewState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            quizState.classList.add('hidden');
+            uploadState.classList.remove('hidden');
+            foldersView.classList.add('hidden');
+            authHeader.parentElement.classList.remove('hidden'); // Ensure auth links are visible on reset
+        }
+
+        // Image Resizing Utility
+        function processImageFile(file, maxSize, quality) {
+             return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height = Math.round((height * maxSize) / width);
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width = Math.round((width * maxSize) / height);
+                                height = maxSize;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const match = dataUrl.match(/^data:(image\/\w+);base64,(.*)$/);
+                        if (!match) return resolve(null);
+                        
+                        const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+                        resolve({ 
+                            thumbnailSrc: dataUrl, 
+                            apiData: { mimeType: match[1], data: match[2] },
+                            id: uniqueId });
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function processDocxFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result })
+                        .then(result => {
+                            const text = result.value; // The raw text from the DOCX file
+                            const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                            
+                            // Create a dynamic SVG icon with the file extension
+                            const extension = "DOCX";
+                            const iconSrc = createFileTypeIcon(extension);
+
+                            // For the API, we send the extracted text, not the file data
+                            resolve({
+                                thumbnailSrc: iconSrc,
+                                apiData: { text: text }, // Sending as a text part
+                                id: uniqueId
+                            });
+                        })
+                        .catch(err => {
+                            console.error("Error processing .docx file:", err);
+                            showAlert("File Error", `Could not read the content of ${file.name}. The file might be corrupted or in an unsupported format.`);
+                            resolve(null); // Resolve with null to avoid breaking the Promise.all chain
+                        });
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file); // mammoth.js needs an ArrayBuffer
+            });
+        }
+
+        function processGenericFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+                    if (!match) {
+                        console.error("Could not parse data URL for file:", file.name);
+                        return resolve(null);
+                    }
+
+                    const uniqueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Create a dynamic SVG icon with the file extension
+                    const extension = file.name.split('.').pop().toUpperCase();
+                    const genericIconSrc = createFileTypeIcon(extension);
+
+                    resolve({
+                        thumbnailSrc: genericIconSrc,
+                        apiData: { mimeType: match[1], data: match[2] },
+                        id: uniqueId
+                    });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function createFileTypeIcon(extension) {
+            // This function generates an SVG data URL for a file icon with the extension text.
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+                    <rect width="80" height="80" rx="8" fill="#475569"></rect>
+                    <path d="M20 8 L52 8 L64 20 L64 72 L20 72 Z" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"></path>
+                    <path d="M52 8 L52 20 L64 20 Z" fill="#cbd5e1"></path>
+                    <text x="42" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="bold" fill="#1e293b" text-anchor="middle">${extension}</text>
+                </svg> 
+            `;
+            // We need to properly encode the SVG for use in a data URL.
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
+        }
+
+        }); // End of main app logic wrapper
+
+    </script>
+</body>
+</html>
