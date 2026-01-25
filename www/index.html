@@ -491,31 +491,40 @@
         let auth, db, storage;
 
         function getBaseUrl() {
-            // Check if we are running in the native Capacitor environment
-            const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
-            // If native, point to the live backend. If web, use relative path.
-            return isNative ? 'https://tutormate.ai' : '';
+            // If we are running in the app (Capacitor), use the live site.
+            if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+                return 'https://tutormate.ai';
+            }
+            // Otherwise (Web), use relative.
+            return '';
         }
 
         async function initializeAppAndServices() {
-            // Fetch the configuration from our Netlify function
-            const response = await fetch(getBaseUrl() + '/.netlify/functions/config');
-            const config = await response.json();
+            try {
+                // Fetch config using the dynamic base URL
+                const response = await fetch(getBaseUrl() + '/.netlify/functions/config');
+                if (!response.ok) throw new Error('Config fetch failed: ' + response.status);
 
-            const firebaseConfig = {
-                apiKey: config.firebaseApiKey,
-                authDomain: config.firebaseAuthDomain,
-                projectId: config.firebaseProjectId,
-                storageBucket: config.firebaseStorageBucket,
-                messagingSenderId: config.firebaseMessagingSenderId,
-                appId: config.firebaseAppId,
-                measurementId: config.firebaseMeasurementId
-            };
+                const config = await response.json();
+                const firebaseConfig = {
+                    apiKey: config.firebaseApiKey,
+                    authDomain: config.firebaseAuthDomain,
+                    projectId: config.firebaseProjectId,
+                    storageBucket: config.firebaseStorageBucket,
+                    messagingSenderId: config.firebaseMessagingSenderId,
+                    appId: config.firebaseAppId,
+                    measurementId: config.firebaseMeasurementId
+                };
 
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            storage = getStorage(app);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                storage = getStorage(app);
+            } catch (error) {
+                // ALERT the error so we can see it on the phone
+                alert('Startup Error: ' + error.message);
+                console.error(error);
+            }
         }
 
         // App State
