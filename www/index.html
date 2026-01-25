@@ -135,7 +135,13 @@
     <!-- Firebase SDKs will be loaded at the end of the body -->
 </head>
 <body class="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-
+<!-- ADD THIS ERROR TRAP HERE -->
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        // This forces an alert to pop up on your iPhone if the app crashes silently
+        alert("CRITICAL ERROR:\n" + message + "\nLine: " + lineno);
+      };
+    </script>
     <nav class="w-full bg-indigo-800 shadow-md fixed top-0 left-0 z-50">
         <div class="w-full flex justify-between items-center md:max-w-5xl mx-auto px-4 h-16">
         <!-- Logo/Title on the left -->
@@ -491,11 +497,9 @@
         let auth, db, storage;
 
         function getBaseUrl() {
-            // If we are running in the app (Capacitor), use the live site.
             if (window.Capacitor && window.Capacitor.isNativePlatform()) {
                 return 'https://tutormate.ai';
             }
-            // Otherwise (Web), use relative.
             return '';
         }
 
@@ -522,7 +526,7 @@
                 storage = getStorage(app);
             } catch (error) {
                 // ALERT the error so we can see it on the phone
-                alert('Startup Error: ' + error.message);
+                alert('Startup Failed: ' + error.message);
                 console.error(error);
             }
         }
