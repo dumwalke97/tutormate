@@ -520,10 +520,15 @@
                     measurementId: config.firebaseMeasurementId
                 };
 
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                storage = getStorage(app);
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    storage = getStorage(app);
+                } catch (authError) {
+                    console.error("Firebase Init Warning:", authError);
+                    // Allow app to continue even if auth has a hiccup
+                }
             } catch (error) {
                 // ALERT the error so we can see it on the phone
                 alert('Startup Failed: ' + error.message);
@@ -954,7 +959,8 @@
         });
 
         // Firebase Auth State Listener
-        onAuthStateChanged(auth, async user => {
+        if (auth) {
+            onAuthStateChanged(auth, async user => {
             if (user && !user.isAnonymous) {
                 // Logged-in user
                 currentUserId = user.uid;
@@ -1006,6 +1012,10 @@
                 resetApp();
             }
         });
+        } else {
+            console.warn("Auth not initialized, skipping auth listener.");
+            resetApp();
+        }
 
         async function createNewFolder(folderName) {
             if (!currentUserId || !folderName) return;
