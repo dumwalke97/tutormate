@@ -932,7 +932,11 @@
                     hideLoginModal(); // onAuthStateChanged will handle the rest
                 })
                 .catch((error) => {
-                    showAlert("Sign Up Failed", error.message);
+                    if (error.code === 'auth/email-already-in-use') {
+                        showAlert("Sign Up Failed", "This email address is already associated with an account. Please log in instead.");
+                    } else {
+                        showAlert("Sign Up Failed", error.message);
+                    }
                 });
         });
 
