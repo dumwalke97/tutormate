@@ -1,34 +1,7 @@
-import admin from 'firebase-admin';
-
-// Initialize Firebase Admin once per function instance.
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(
-      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-    ),
-  });
-}
-
 export default async (req, context) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
-
-  // 0. Require a valid Firebase ID token before doing anything else.
-  const authHeader = req.headers.get('authorization') || '';
-  const tokenMatch = authHeader.match(/^Bearer (.+)$/);
-  if (!tokenMatch) {
-    return new Response(JSON.stringify({ error: 'Missing ID token' }), { status: 401 });
-  }
-
-  let decodedToken;
-  try {
-    decodedToken = await admin.auth().verifyIdToken(tokenMatch[1]);
-  } catch (authError) {
-    console.error('Token verification failed:', authError);
-    return new Response(JSON.stringify({ error: 'Invalid or expired ID token' }), { status: 401 });
-  }
-  // decodedToken.uid identifies the caller (useful for rate limiting/logging).
 
   try {
     // 1. Get the secret variables from Netlify
@@ -61,19 +34,19 @@ export default async (req, context) => {
             const arrayBuffer = await imageResponse.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
             const base64String = buffer.toString('base64');
-
+            
             // Return a new part object in the format Gemini expects for inline data.
             // We use the mimeType from the payload or default to jpeg.
-            return {
-                inlineData: {
-                    mimeType: part.fileData.mimeType || 'image/jpeg',
-                    data: base64String
-                }
+            return { 
+                inlineData: { 
+                    mimeType: part.fileData.mimeType || 'image/jpeg', 
+                    data: base64String 
+                } 
             };
           } catch (fetchError) {
             console.error('Error fetching fileUri:', fetchError);
             // Return null for failed fetches so we can filter them out
-            return null;
+            return null; 
           }
         }
         return part; // If it's not a fileUri part (e.g., text or already inlineData), return it as is.
@@ -81,14 +54,17 @@ export default async (req, context) => {
 
       // Replace the original parts with the processed ones, filtering out any nulls from failed fetches.
       payload.contents[0].parts = processedParts.filter(Boolean);
-
+      
       if (payload.contents[0].parts.length === 0) {
            throw new Error("No valid content to send to AI (all file downloads failed).");
       }
     }
 
     // 3. Construct the correct Gemini API URL
-    const model = 'gemini-2.5-flash';
+    // This is the simple, correct URL for the API you enabled.
+    // It does not use project ID or region.
+    // Using the model you had in your uploaded file:
+    const model = 'gemini-2.5-flash'; 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     // 4. Call the Gemini API
