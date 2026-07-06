@@ -2,6 +2,7 @@
   "dependencies": {
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.1",
-    "@capacitor/ios": "^8.0.1"
+    "@capacitor/ios": "^8.0.1",
+    "firebase-admin": "^14.1.0"
   }
 }
