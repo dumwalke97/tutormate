@@ -1,13 +1,16 @@
-import admin from 'firebase-admin';
+// Modular imports are required: the default `firebase-admin` import comes
+// through as undefined once Netlify's bundler converts this file to CJS.
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 // Initialize Firebase Admin lazily so a missing/invalid env var produces a
 // clear error response instead of crashing the function at load time.
 let adminInitError = null;
 function ensureAdmin() {
-  if (admin.apps.length) return true;
+  if (getApps().length) return true;
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(
+    initializeApp({
+      credential: cert(
         JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
       ),
     });
@@ -37,7 +40,7 @@ export default async (req, context) => {
 
   let decodedToken;
   try {
-    decodedToken = await admin.auth().verifyIdToken(tokenMatch[1]);
+    decodedToken = await getAuth().verifyIdToken(tokenMatch[1]);
   } catch (authError) {
     console.error('Token verification failed:', authError);
     return new Response(JSON.stringify({ error: 'Invalid or expired ID token' }), { status: 401 });
