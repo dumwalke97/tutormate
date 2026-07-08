@@ -1,24 +1,27 @@
-// Modular imports are required: the default `firebase-admin` import comes
-// through as undefined once Netlify's bundler converts this file to CJS.
-import { getApps, initializeApp, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+// Firebase ID tokens are verified against Google's public JWKS with `jose`,
+// per Firebase's documented third-party JWT verification: signature, issuer,
+// audience, expiry, and subject. No service account or firebase-admin needed.
+// `jose` is ESM-only, so it's loaded via dynamic import (safe from the CJS
+// output Netlify's bundler produces).
+const FIREBASE_PROJECT_ID = 'tutor-mate-476113';
+const FIREBASE_JWKS_URL =
+  'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
-// Initialize Firebase Admin lazily so a missing/invalid env var produces a
-// clear error response instead of crashing the function at load time.
-let adminInitError = null;
-function ensureAdmin() {
-  if (getApps().length) return true;
-  try {
-    initializeApp({
-      credential: cert(
-        JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-      ),
-    });
-    return true;
-  } catch (initError) {
-    adminInitError = initError;
-    return false;
+let jwks = null;
+async function verifyFirebaseToken(token) {
+  const { createRemoteJWKSet, jwtVerify } = await import('jose');
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(FIREBASE_JWKS_URL));
   }
+  const { payload } = await jwtVerify(token, jwks, {
+    issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+    audience: FIREBASE_PROJECT_ID,
+    algorithms: ['RS256'],
+  });
+  if (!payload.sub) {
+    throw new Error('Token has no subject (uid).');
+  }
+  return payload;
 }
 
 export default async (req, context) => {
@@ -27,11 +30,6 @@ export default async (req, context) => {
   }
 
   // 0. Require a valid Firebase ID token before doing anything else.
-  if (!ensureAdmin()) {
-    console.error('Firebase Admin init failed (is FIREBASE_SERVICE_ACCOUNT set in Netlify env vars?):', adminInitError);
-    return new Response(JSON.stringify({ error: 'Server auth is not configured.' }), { status: 500 });
-  }
-
   const authHeader = req.headers.get('authorization') || '';
   const tokenMatch = authHeader.match(/^Bearer (.+)$/);
   if (!tokenMatch) {
@@ -40,12 +38,12 @@ export default async (req, context) => {
 
   let decodedToken;
   try {
-    decodedToken = await getAuth().verifyIdToken(tokenMatch[1]);
+    decodedToken = await verifyFirebaseToken(tokenMatch[1]);
   } catch (authError) {
     console.error('Token verification failed:', authError);
     return new Response(JSON.stringify({ error: 'Invalid or expired ID token' }), { status: 401 });
   }
-  // decodedToken.uid identifies the caller (useful for rate limiting/logging).
+  // decodedToken.sub is the caller's uid (useful for rate limiting/logging).
 
   try {
     // 1. Get the secret variables from Netlify
