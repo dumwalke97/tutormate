@@ -5,13 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy — TutorMate</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Brand navy palette (matches the iOS app, replaces the old indigo scheme)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            50: '#EEF1F8',
+                            200: '#B9C4DE',
+                            400: '#5B6B96',
+                            500: '#3C4A72',
+                            600: '#2A3760',
+                            700: '#202B52',
+                            800: '#1B2447',
+                            900: '#131A35'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-800">
     <div class="max-w-3xl mx-auto px-6 py-12">
         <header class="mb-10">
             <a href="/" class="inline-flex items-center gap-3">
                 <img src="/Assets/TutorMateLogoTransparent.png" alt="TutorMate" class="h-12 w-12">
-                <span class="text-2xl font-bold text-indigo-900">TutorMate</span>
+                <span class="text-2xl font-bold text-navy-900">TutorMate</span>
             </a>
             <h1 class="text-3xl font-bold mt-8 text-slate-900">Privacy Policy</h1>
             <p class="text-slate-500 mt-2">Effective date: July 7, 2026</p>
@@ -43,13 +64,13 @@
 
             <section>
                 <h2 class="text-xl font-semibold text-slate-900 mb-3">AI Processing</h2>
-                <p>When you generate a quiz or check an assignment, the images and text you submit are transmitted securely to our server and processed by Google's Gemini API to produce the result. This content is used to generate your quiz or feedback and is subject to <a href="https://ai.google.dev/gemini-api/terms" class="text-indigo-700 underline">Google's API terms</a>. We recommend not including sensitive personal information in uploaded images.</p>
+                <p>When you generate a quiz or check an assignment, the images and text you submit are transmitted securely to our server and processed by Google's Gemini API to produce the result. This content is used to generate your quiz or feedback and is subject to <a href="https://ai.google.dev/gemini-api/terms" class="text-navy-700 underline">Google's API terms</a>. We recommend not including sensitive personal information in uploaded images.</p>
             </section>
 
             <section>
                 <h2 class="text-xl font-semibold text-slate-900 mb-3">Service Providers</h2>
                 <ul class="list-disc pl-6 space-y-2">
-                    <li><strong>Google Firebase</strong> — authentication, database, and file storage (<a href="https://firebase.google.com/support/privacy" class="text-indigo-700 underline">Firebase privacy information</a>).</li>
+                    <li><strong>Google Firebase</strong> — authentication, database, and file storage (<a href="https://firebase.google.com/support/privacy" class="text-navy-700 underline">Firebase privacy information</a>).</li>
                     <li><strong>Google Gemini API</strong> — AI processing of submitted content.</li>
                     <li><strong>Apple</strong> — subscription billing and management.</li>
                     <li><strong>Netlify</strong> — website and API hosting.</li>
@@ -83,12 +104,12 @@
 
             <section>
                 <h2 class="text-xl font-semibold text-slate-900 mb-3">Contact</h2>
-                <p>Questions or requests about this policy or your data: <a href="mailto:support@tutormate.ai" class="text-indigo-700 underline">support@tutormate.ai</a></p>
+                <p>Questions or requests about this policy or your data: <a href="mailto:support@tutormate.ai" class="text-navy-700 underline">support@tutormate.ai</a></p>
             </section>
         </main>
 
         <footer class="mt-12 pt-6 border-t border-slate-200 text-sm text-slate-500">
-            <a href="/" class="text-indigo-700 underline">← Back to TutorMate</a>
+            <a href="/" class="text-navy-700 underline">← Back to TutorMate</a>
         </footer>
     </div>
 </body>
