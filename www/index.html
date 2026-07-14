@@ -48,12 +48,40 @@
             font-family: 'Nunito', sans-serif;
             font-weight: 800;
         }
+
+        /* Snap-scrolling: each major section occupies one viewport and
+           settles into place as the user scrolls. scroll-padding-top offsets
+           every snap point by the sticky nav's height so sections don't land
+           partially hidden underneath it. */
+        :root {
+            --nav-h: 4rem;
+        }
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-padding-top: var(--nav-h);
+            scroll-behavior: smooth;
+        }
+        .snap-section {
+            scroll-snap-align: start;
+        }
+        .snap-fill {
+            min-height: 100vh;
+            min-height: calc(100svh - var(--nav-h));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
     <!-- Nav -->
-    <nav class="w-full bg-navy-800 shadow-md">
+    <nav class="w-full bg-navy-800 shadow-md sticky top-0 z-50">
         <div class="w-full flex justify-between items-center max-w-5xl mx-auto px-4 h-16">
             <a href="/" class="flex items-center gap-2">
                 <img src="Assets/TutorMateLogoTransparent.png" alt="TutorMate" class="h-9 w-9">
@@ -70,8 +98,8 @@
     </nav>
 
     <!-- Hero -->
-    <header class="bg-navy-800">
-        <div class="max-w-3xl mx-auto px-6 pt-14 pb-20 text-center">
+    <header class="bg-navy-800 snap-section snap-fill">
+        <div class="max-w-3xl mx-auto px-6 py-10 text-center">
             <img src="Assets/TutorMateLogoTransparent.png" alt="TutorMate logo" class="mx-auto w-24 mb-6">
             <h1 class="font-title text-3xl sm:text-4xl text-white leading-tight">
                 Check your work.<br>Study smarter.
@@ -94,7 +122,7 @@
     </header>
 
     <!-- For students and parents -->
-    <section class="max-w-3xl mx-auto px-6 py-14 text-center">
+    <section class="snap-section snap-fill max-w-3xl mx-auto px-6 py-14 text-center">
         <h2 class="font-title text-2xl text-navy-900">Made for students. Trusted by parents.</h2>
         <p class="mt-4 text-slate-600 leading-relaxed">
             TutorMate isn't an answer machine. When you upload an assignment, it checks your work and explains
@@ -105,22 +133,35 @@
     </section>
 
     <!-- How it works -->
-    <section id="how-it-works" class="bg-white border-y border-slate-200">
-        <div class="max-w-4xl mx-auto px-6 py-16">
+    <section id="how-it-works" class="snap-section snap-fill bg-white border-y border-slate-200">
+        <div class="max-w-4xl mx-auto px-6 py-10 w-full">
             <h2 class="font-title text-2xl text-navy-900 text-center mb-12">How it works</h2>
             <div class="grid sm:grid-cols-3 gap-10 text-center">
                 <div>
-                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-2xl">📸</div>
+                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-navy-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z"/>
+                        </svg>
+                    </div>
                     <h3 class="mt-4 font-semibold text-slate-900">1. Snap a photo</h3>
                     <p class="mt-2 text-sm text-slate-600">Upload a picture of your worksheet or assignment, or type in a topic you want to study.</p>
                 </div>
                 <div>
-                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-2xl">✅</div>
+                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-navy-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0 1 18 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3 1.5 1.5 3-3.75"/>
+                        </svg>
+                    </div>
                     <h3 class="mt-4 font-semibold text-slate-900">2. Get feedback or a quiz</h3>
                     <p class="mt-2 text-sm text-slate-600">TutorMate checks your answers and explains its reasoning, or builds a custom practice quiz in seconds.</p>
                 </div>
                 <div>
-                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-2xl">📈</div>
+                    <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-navy-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-7 h-7" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/>
+                        </svg>
+                    </div>
                     <h3 class="mt-4 font-semibold text-slate-900">3. Save your progress</h3>
                     <p class="mt-2 text-sm text-slate-600">Keep everything organized in folders so you can review and practice again before test day.</p>
                 </div>
@@ -129,7 +170,7 @@
     </section>
 
     <!-- Pricing -->
-    <section id="pricing" class="max-w-3xl mx-auto px-6 py-16 text-center">
+    <section id="pricing" class="snap-section snap-fill max-w-3xl mx-auto px-6 py-10 text-center">
         <h2 class="font-title text-2xl text-navy-900">Simple pricing</h2>
         <p class="mt-3 text-slate-600">Start free. Upgrade any time, on the web or in the app.</p>
         <div class="mt-10 grid sm:grid-cols-2 gap-6 max-w-xl mx-auto">
@@ -148,7 +189,7 @@
         <p class="mt-8 text-xs text-slate-400">Subscription checkout is coming soon. For now, jump in and try it free.</p>
     </section>
 
-    <footer class="bg-navy-900">
+    <footer class="bg-navy-900 snap-section">
         <div class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p class="text-xs text-navy-200">&copy; 2026 TutorMate. All rights reserved.</p>
             <div class="flex gap-5 text-xs text-navy-200">
