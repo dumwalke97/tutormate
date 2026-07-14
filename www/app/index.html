@@ -182,6 +182,7 @@
                     <div id="mobile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                         <button id="home-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Home</button>
                         <button id="my-folders-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">My Folders</button>
+                        <button id="manage-subscription-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Manage Subscription</button>
                         <button id="signout-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Sign Out</button>
                     </div>
                 </div>
@@ -634,6 +635,7 @@
             const loginPanel = document.getElementById('login-panel');
             const homeLink = document.getElementById('home-link');
             const myFoldersLink = document.getElementById('my-folders-link');
+            const manageSubscriptionLink = document.getElementById('manage-subscription-link');
             const usernameDisplay = document.getElementById('username-display');
             const menuBtn = document.getElementById('menu-btn');
             const mobileMenu = document.getElementById('mobile-menu');
@@ -848,6 +850,54 @@
             resetApp(); // Go to home screen
         });
 
+        manageSubscriptionLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close menu
+            openBillingPortal();
+        });
+
+        // Redirects to a Stripe Checkout Session for the given plan
+        // ('monthly' or 'annual'). Requires a logged-in, non-anonymous user.
+        async function startCheckout(plan) {
+            if (!auth || !auth.currentUser) return;
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                const response = await fetch(getBaseUrl() + '/.netlify/functions/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+                    body: JSON.stringify({ plan })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.url) {
+                    throw new Error(data.error || 'Could not start checkout.');
+                }
+                window.location.href = data.url;
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showAlert('Something went wrong', "We couldn't start checkout. Please try again in a moment.");
+            }
+        }
+
+        // Redirects to Stripe's hosted Customer Portal for the current
+        // subscriber to manage or cancel their plan.
+        async function openBillingPortal() {
+            if (!auth || !auth.currentUser) return;
+            try {
+                const idToken = await auth.currentUser.getIdToken();
+                const response = await fetch(getBaseUrl() + '/.netlify/functions/create-portal-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.url) {
+                    throw new Error(data.error || 'Could not open the billing portal.');
+                }
+                window.location.href = data.url;
+            } catch (error) {
+                console.error('Billing portal error:', error);
+                showAlert('Something went wrong', error.message || "We couldn't open the billing portal.");
+            }
+        }
+
         // --- Auth & Modal Event Listeners ---
 
         const showAlert = (title, message) => {
@@ -1056,6 +1106,16 @@
                 await loadUserFolders();
                 refreshUsageBadgeFromFirestore(user.uid);
 
+                // Deep link from the marketing page's pricing buttons
+                // (/app/?plan=monthly|annual). Consume the param immediately
+                // so a page refresh doesn't re-trigger checkout.
+                const pendingPlan = new URLSearchParams(window.location.search).get('plan');
+                if (pendingPlan === 'monthly' || pendingPlan === 'annual') {
+                    history.replaceState(null, '', window.location.pathname);
+                    startCheckout(pendingPlan);
+                    return;
+                }
+
                 // --- App State Restoration on Load (moved here) ---
                 const lastView = sessionStorage.getItem('currentView');
                 if (lastView === 'folders') {
@@ -1079,6 +1139,13 @@
                 // Force the main screen to show
                 resetApp();
                 refreshUsageBadgeFromFirestore(user.uid);
+                // A guest following a pricing link needs a real account first
+                // (subscriptions can't attach to an anonymous session). The
+                // ?plan= param stays in the URL, so checkout starts
+                // automatically once they log in and this listener re-fires.
+                if (new URLSearchParams(window.location.search).get('plan')) {
+                    showLoginModal(false);
+                }
             } else {
                 // Signed out state (Guest, no session created yet)
                 currentUserId = null;
@@ -1096,6 +1163,10 @@
                 // Show the full free-use count without a network round trip.
                 lastUsageInfo = { count: 0, limit: FREE_LIMIT_CLIENT, subscribed: false };
                 updateUsageBadge();
+                // Same deep-link handling as the anonymous branch above.
+                if (new URLSearchParams(window.location.search).get('plan')) {
+                    showLoginModal(false);
+                }
             }
         });
         } else {

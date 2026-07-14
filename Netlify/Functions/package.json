@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "jose": "^6.2.3"
+    "jose": "^6.2.3",
+    "stripe": "^22.3.1"
   }
 }
