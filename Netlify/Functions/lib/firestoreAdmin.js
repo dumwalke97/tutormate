@@ -84,6 +84,36 @@ export async function getUserDocAdmin(uid) {
   };
 }
 
+// Lists every users/{uid} doc with admin credentials, paginating through
+// the whole collection. Used by one-off migration scripts, not by any
+// deployed function — there's no reason a request handler should ever need
+// to enumerate every user.
+export async function listAllUsersAdmin() {
+  const accessToken = await getAccessToken();
+  const results = [];
+  let pageToken;
+  do {
+    const url = new URL(`${FIRESTORE_BASE}/users`);
+    url.searchParams.set('pageSize', '300');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) {
+      throw new Error(`Failed to list users (status ${res.status}): ${await res.text()}`);
+    }
+    const data = await res.json();
+    for (const doc of data.documents || []) {
+      const fields = doc.fields || {};
+      results.push({
+        uid: doc.name.split('/').pop(),
+        stripeCustomerId: fields.stripeCustomerId?.stringValue || null,
+        subscriptionStatus: fields.subscriptionStatus?.stringValue || null,
+      });
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return results;
+}
+
 // Upserts the given string fields on users/{uid} with admin credentials.
 // Firestore's PATCH with updateMask creates the document if it doesn't
 // exist yet, so this works for a brand-new user too.

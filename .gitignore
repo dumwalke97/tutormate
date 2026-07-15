@@ -1,2 +1,8 @@
 # Local Netlify folder
 .netlify
+
+# Local-only secrets (e.g. Stripe CLI webhook signing secret for dev)
+.env
+
+# One-off scripts containing real user PII — never belongs in a public repo
+scripts/grandfather-beta-users.mjs
