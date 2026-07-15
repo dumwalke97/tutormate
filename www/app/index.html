@@ -878,9 +878,19 @@
         }
 
         // Redirects to Stripe's hosted Customer Portal for the current
-        // subscriber to manage or cancel their plan.
+        // subscriber to manage or cancel their plan. Grandfathered accounts
+        // have no real Stripe subscription behind them, so there's nothing
+        // for the portal to show, so greet them instead of hitting the API.
         async function openBillingPortal() {
             if (!auth || !auth.currentUser) return;
+            if (lastUsageInfo && lastUsageInfo.subscriptionSource === 'grandfathered') {
+                showAlert(
+                    "You're a founding member!",
+                    "As one of TutorMate's original beta testers, you've been granted a free lifetime subscription, no payment required, ever. Thank you for helping us build this.",
+                    'success'
+                );
+                return;
+            }
             try {
                 const idToken = await auth.currentUser.getIdToken();
                 const response = await fetch(getBaseUrl() + '/.netlify/functions/create-portal-session', {
@@ -900,9 +910,11 @@
 
         // --- Auth & Modal Event Listeners ---
 
-        const showAlert = (title, message) => {
+        const showAlert = (title, message, tone = 'error') => {
             alertTitle.textContent = title;
             alertMessage.textContent = message;
+            alertTitle.classList.remove('text-red-600', 'dark:text-red-500', 'text-navy-800', 'dark:text-navy-300');
+            alertTitle.classList.add(...(tone === 'success' ? ['text-navy-800', 'dark:text-navy-300'] : ['text-red-600', 'dark:text-red-500']));
             alertModal.classList.remove('hidden');
         };
 
@@ -942,7 +954,8 @@
                 lastUsageInfo = {
                     count: data.usageCount || 0,
                     limit: FREE_LIMIT_CLIENT,
-                    subscribed: data.subscriptionStatus === 'active'
+                    subscribed: data.subscriptionStatus === 'active',
+                    subscriptionSource: data.subscriptionSource || null
                 };
                 updateUsageBadge();
             } catch (e) {
