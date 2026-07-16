@@ -493,7 +493,8 @@
             signInWithPopup,
             signOut,
             createUserWithEmailAndPassword,
-            signInWithEmailAndPassword
+            signInWithEmailAndPassword,
+            sendEmailVerification
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { 
             getFirestore,
@@ -1068,7 +1069,19 @@
             const password = signupPassword.value;
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
+                    // Matches the iOS app: fire-and-forget the verification
+                    // email, then let them straight into the app. This is a
+                    // nudge, not a gate, so a failure here shouldn't block
+                    // sign up.
+                    sendEmailVerification(userCredential.user).catch((error) => {
+                        console.warn('Could not send verification email:', error);
+                    });
                     hideLoginModal(); // onAuthStateChanged will handle the rest
+                    showAlert(
+                        'Verify Your Email',
+                        `We sent a verification link to ${email}. Please check your inbox to confirm your account.`,
+                        'success'
+                    );
                 })
                 .catch((error) => {
                     if (error.code === 'auth/email-already-in-use') {
