@@ -114,6 +114,43 @@ export async function listAllUsersAdmin() {
   return results;
 }
 
+// Lists document IDs directly under a collection path with admin
+// credentials, e.g. `users/{uid}/folders`. Used by one-off cleanup scripts
+// that need to walk a user's subcollections before deleting them.
+export async function listCollectionAdmin(path) {
+  const accessToken = await getAccessToken();
+  const results = [];
+  let pageToken;
+  do {
+    const url = new URL(`${FIRESTORE_BASE}/${path}`);
+    url.searchParams.set('pageSize', '300');
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (!res.ok) {
+      throw new Error(`Failed to list ${path} (status ${res.status}): ${await res.text()}`);
+    }
+    const data = await res.json();
+    for (const doc of data.documents || []) {
+      results.push(doc.name.split('/').pop());
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return results;
+}
+
+// Deletes a single document by its full path (e.g. `users/{uid}` or
+// `users/{uid}/folders/{folderId}`) with admin credentials.
+export async function deleteDocAdmin(path) {
+  const accessToken = await getAccessToken();
+  const res = await fetch(`${FIRESTORE_BASE}/${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Failed to delete ${path} (status ${res.status}): ${await res.text()}`);
+  }
+}
+
 // Upserts the given string fields on users/{uid} with admin credentials.
 // Firestore's PATCH with updateMask creates the document if it doesn't
 // exist yet, so this works for a brand-new user too.
