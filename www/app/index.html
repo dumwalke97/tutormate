@@ -862,6 +862,18 @@
         async function startCheckout(plan) {
             if (!auth || !auth.currentUser) return;
             try {
+                // Never sell a second subscription to an account that already
+                // has one — including one purchased on the iOS app via Apple.
+                const snap = await getDoc(doc(db, 'users', auth.currentUser.uid));
+                const existing = snap.exists() ? snap.data() : {};
+                if (existing.subscriptionStatus === 'active' || existing.appleSubscriptionStatus === 'active') {
+                    showAlert(
+                        "You're already a Premium member!",
+                        "This account already has an active TutorMate Premium subscription, so there's nothing to buy — enjoy unlimited access on both the web and the iOS app.",
+                        'success'
+                    );
+                    return;
+                }
                 const idToken = await auth.currentUser.getIdToken();
                 const response = await fetch(getBaseUrl() + '/.netlify/functions/create-checkout-session', {
                     method: 'POST',
@@ -889,6 +901,16 @@
                 showAlert(
                     "You're a founding member!",
                     "As one of TutorMate's original beta testers, you've been granted a free lifetime subscription, no payment required, ever. Thank you for helping us build this.",
+                    'success'
+                );
+                return;
+            }
+            // Apple subscriptions have no Stripe customer behind them; Apple
+            // only allows managing them through the App Store.
+            if (lastUsageInfo && lastUsageInfo.subscriptionSource === 'apple') {
+                showAlert(
+                    'Managed by the App Store',
+                    "Your TutorMate Premium subscription was purchased in the iOS app, so Apple handles the billing. To manage or cancel it, open Settings on your iPhone or iPad, tap your name, then Subscriptions.",
                     'success'
                 );
                 return;
@@ -953,11 +975,16 @@
             try {
                 const snap = await getDoc(doc(db, 'users', uid));
                 const data = snap.exists() ? snap.data() : {};
+                // appleSubscriptionStatus is written by the iOS app when a
+                // subscription is purchased through Apple — same login works
+                // on both platforms, so either field unlocks premium here.
                 lastUsageInfo = {
                     count: data.usageCount || 0,
                     limit: FREE_LIMIT_CLIENT,
-                    subscribed: data.subscriptionStatus === 'active',
-                    subscriptionSource: data.subscriptionSource || null
+                    subscribed: data.subscriptionStatus === 'active' || data.appleSubscriptionStatus === 'active',
+                    subscriptionSource: data.subscriptionSource
+                        || (data.subscriptionStatus === 'active' ? 'stripe'
+                            : data.appleSubscriptionStatus === 'active' ? 'apple' : null)
                 };
                 updateUsageBadge();
             } catch (e) {

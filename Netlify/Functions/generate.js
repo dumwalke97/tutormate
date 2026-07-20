@@ -37,7 +37,7 @@ async function getUsage(uid, idToken) {
     headers: { Authorization: `Bearer ${idToken}` },
   });
   if (res.status === 404) {
-    return { usageCount: 0, subscriptionStatus: null };
+    return { usageCount: 0, subscriptionStatus: null, appleSubscriptionStatus: null, subscriptionSource: null };
   }
   if (!res.ok) {
     throw new Error(`Failed to read usage (status ${res.status})`);
@@ -45,7 +45,27 @@ async function getUsage(uid, idToken) {
   const doc = await res.json();
   const usageCount = parseInt(doc.fields?.usageCount?.integerValue || '0', 10);
   const subscriptionStatus = doc.fields?.subscriptionStatus?.stringValue || null;
-  return { usageCount, subscriptionStatus };
+  // Written by the iOS app when a subscription is purchased through Apple.
+  // Same login, either platform: an Apple subscription unlocks the web too.
+  const appleSubscriptionStatus = doc.fields?.appleSubscriptionStatus?.stringValue || null;
+  const subscriptionSource = doc.fields?.subscriptionSource?.stringValue || null;
+  return { usageCount, subscriptionStatus, appleSubscriptionStatus, subscriptionSource };
+}
+
+// A user is subscribed if either purchase path is active: Stripe on the web
+// (subscriptionStatus, written by the Stripe webhook — also 'active' for
+// grandfathered accounts) or Apple on iOS (appleSubscriptionStatus).
+function isSubscribedUsage(usage) {
+  return usage.subscriptionStatus === 'active' || usage.appleSubscriptionStatus === 'active';
+}
+
+// Where the active subscription came from, for the client's "manage
+// subscription" affordance ('grandfathered' | 'stripe' | 'apple' | null).
+function subscriptionSourceOf(usage) {
+  if (usage.subscriptionSource) return usage.subscriptionSource;
+  if (usage.subscriptionStatus === 'active') return 'stripe';
+  if (usage.appleSubscriptionStatus === 'active') return 'apple';
+  return null;
 }
 
 // Upserts usageCount only (never touches subscriptionStatus, which is
@@ -103,7 +123,7 @@ export default async (req, context) => {
   // the iOS app doesn't send this header, so it skips this block entirely
   // and behaves exactly as it did before this change.
   const isWebClient = req.headers.get('x-tutormate-platform') === 'web';
-  let usage = { usageCount: 0, subscriptionStatus: null };
+  let usage = { usageCount: 0, subscriptionStatus: null, appleSubscriptionStatus: null, subscriptionSource: null };
   if (isWebClient) {
     try {
       usage = await getUsage(uid, idToken);
@@ -113,7 +133,7 @@ export default async (req, context) => {
       // paying/free user entirely; the increment below will still be attempted.
     }
 
-    const isSubscribed = usage.subscriptionStatus === 'active';
+    const isSubscribed = isSubscribedUsage(usage);
     if (!isSubscribed && usage.usageCount >= FREE_LIMIT) {
       return new Response(
         JSON.stringify({
@@ -218,7 +238,8 @@ export default async (req, context) => {
       data._usage = {
         count: newUsageCount,
         limit: FREE_LIMIT,
-        subscribed: usage.subscriptionStatus === 'active',
+        subscribed: isSubscribedUsage(usage),
+        subscriptionSource: subscriptionSourceOf(usage),
       };
     }
     return new Response(JSON.stringify(data), {
