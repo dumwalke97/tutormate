@@ -208,7 +208,7 @@ export default async (req, context) => {
     // This is the simple, correct URL for the API you enabled.
     // It does not use project ID or region.
     // Using the model you had in your uploaded file:
-    const model = 'gemini-2.5-flash';
+    const model = 'gemini-3.6-flash';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
     // 4. Call the Gemini API
