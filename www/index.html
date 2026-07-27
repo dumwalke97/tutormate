@@ -50,20 +50,17 @@
             font-weight: 800;
         }
 
-        /* Snap-scrolling: each major section occupies one viewport and
-           settles into place as the user scrolls. scroll-padding-top offsets
-           every snap point by the sticky nav's height so sections don't land
-           partially hidden underneath it. */
+        /* Snap-scrolling was removed: combined with the sticky nav and
+           Safari's expanding/collapsing address bar on iOS, it caused
+           sections to occasionally land partially hidden underneath the
+           nav. scroll-padding-top is kept so anchor-link jumps (e.g. the
+           "How it works" nav link) still clear the sticky nav. */
         :root {
             --nav-h: 4rem;
         }
         html {
-            scroll-snap-type: y mandatory;
             scroll-padding-top: var(--nav-h);
             scroll-behavior: smooth;
-        }
-        .snap-section {
-            scroll-snap-align: start;
         }
         .snap-fill {
             min-height: 100vh;
@@ -99,7 +96,7 @@
     </nav>
 
     <!-- Hero -->
-    <header class="bg-navy-800 snap-section snap-fill">
+    <header class="bg-navy-800 snap-fill">
         <div class="max-w-3xl mx-auto px-6 py-10 text-center">
             <img src="Assets/TutorMateLogoTransparent.png" alt="TutorMate logo" class="mx-auto w-32 mb-6 brightness-0 invert">
             <h1 class="font-title text-3xl sm:text-4xl text-white leading-tight">
@@ -122,21 +119,119 @@
         </div>
     </header>
 
-    <!-- For students and parents -->
-    <section class="snap-section snap-fill max-w-3xl mx-auto px-6 py-14 text-center">
-        <h2 class="font-title text-2xl text-navy-900">Made for students. Trusted by parents.</h2>
-        <p class="mt-4 text-slate-600 leading-relaxed">
-            TutorMate isn't an answer machine. When you upload an assignment, it checks your work and explains
-            what's right, what's off, and why, so you actually understand the material. When you want to
-            practice, it builds a quiz from your notes or any topic you type in. It's a study partner, not a
-            shortcut, which is why students <em>and</em> parents feel good about it.
-        </p>
-    </section>
-
     <!-- How it works -->
-    <section id="how-it-works" class="snap-section snap-fill bg-white border-y border-slate-200">
+    <section id="how-it-works" class="snap-fill bg-white border-y border-slate-200">
         <div class="max-w-4xl mx-auto px-6 py-10 w-full">
-            <h2 class="font-title text-2xl text-navy-900 text-center mb-12">How it works</h2>
+            <h2 class="font-title text-2xl text-navy-900 text-center mb-4">How it works</h2>
+            <div class="max-w-[320px] sm:max-w-[360px] mx-auto mb-12">
+                <div class="relative rounded-[2.5rem] bg-navy-900 p-1.5 shadow-2xl">
+                    <div class="absolute top-1.5 left-1/2 -translate-x-1/2 w-20 h-5 bg-navy-900 rounded-full z-20"></div>
+                    <div id="demo-frame" class="relative rounded-[2rem] overflow-hidden bg-black">
+                        <video
+                            id="demo-video"
+                            class="w-full block"
+                            src="Assets/TutorMateDemo.mp4"
+                            poster="Assets/TutorMateDemoPoster.jpg"
+                            playsinline
+                            preload="metadata"
+                        >
+                            Your browser doesn't support embedded video.
+                        </video>
+
+                        <!-- Center play/pause icon: shown at rest, and briefly on tap while playing -->
+                        <button
+                            id="demo-toggle-btn"
+                            type="button"
+                            aria-label="Play demo video"
+                            class="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors"
+                        >
+                            <span id="demo-toggle-icon" class="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg transition-opacity">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-navy-800 translate-x-0.5" aria-hidden="true">
+                                    <path d="M8 5v14l11-7-11-7z"/>
+                                </svg>
+                            </span>
+                        </button>
+
+                        <!-- Mute toggle -->
+                        <button
+                            id="demo-mute-btn"
+                            type="button"
+                            aria-label="Mute"
+                            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 hidden items-center justify-center text-white z-10"
+                        >
+                            <svg id="demo-mute-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4" aria-hidden="true">
+                                <path d="M11 5 6 9H2v6h4l5 4V5zM16.5 12a4.5 4.5 0 0 0-2.25-3.9v7.8A4.5 4.5 0 0 0 16.5 12z"/>
+                            </svg>
+                        </button>
+
+                        <!-- Progress bar -->
+                        <div class="absolute left-0 right-0 bottom-0 h-1 bg-white/20 z-10">
+                            <div id="demo-progress-fill" class="h-full bg-white/90" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    const video = document.getElementById('demo-video');
+                    const toggleBtn = document.getElementById('demo-toggle-btn');
+                    const toggleIcon = document.getElementById('demo-toggle-icon');
+                    const muteBtn = document.getElementById('demo-mute-btn');
+                    const muteIcon = document.getElementById('demo-mute-icon');
+                    const progressFill = document.getElementById('demo-progress-fill');
+                    if (!video || !toggleBtn) return;
+
+                    const PLAY_ICON = '<path d="M8 5v14l11-7-11-7z"/>';
+                    const PAUSE_ICON = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+                    const MUTE_ICON = '<path d="M11 5 6 9H2v6h4l5 4V5zM16.5 12a4.5 4.5 0 0 0-2.25-3.9v7.8A4.5 4.5 0 0 0 16.5 12z"/>';
+                    const UNMUTE_ICON = '<path d="M11 5 6 9H2v6h4l5 4V5zM19.1 4.9a1 1 0 0 0-1.4 1.4 8.97 8.97 0 0 1 0 11.4 1 1 0 1 0 1.4 1.4 10.97 10.97 0 0 0 0-14.2zM16.3 7.8a1 1 0 0 0-1.4 1.4 4.98 4.98 0 0 1 0 5.6 1 1 0 1 0 1.4 1.4 6.98 6.98 0 0 0 0-8.4z"/>';
+
+                    let hideTimer = null;
+                    function flashIcon(html) {
+                        toggleIcon.innerHTML = html;
+                        toggleBtn.style.opacity = '1';
+                        clearTimeout(hideTimer);
+                        if (!video.paused) {
+                            hideTimer = setTimeout(() => { toggleBtn.style.opacity = '0'; }, 550);
+                        }
+                    }
+
+                    toggleBtn.addEventListener('click', () => {
+                        if (video.paused) {
+                            video.play();
+                        } else {
+                            video.pause();
+                        }
+                    });
+
+                    video.addEventListener('play', () => {
+                        muteBtn.classList.remove('hidden');
+                        muteBtn.classList.add('flex');
+                        flashIcon(PAUSE_ICON);
+                    });
+                    video.addEventListener('pause', () => {
+                        toggleIcon.innerHTML = PLAY_ICON;
+                        toggleBtn.style.opacity = '1';
+                        clearTimeout(hideTimer);
+                    });
+                    video.addEventListener('ended', () => {
+                        video.currentTime = 0;
+                        muteBtn.classList.add('hidden');
+                        muteBtn.classList.remove('flex');
+                    });
+                    video.addEventListener('timeupdate', () => {
+                        if (video.duration) {
+                            progressFill.style.width = ((video.currentTime / video.duration) * 100) + '%';
+                        }
+                    });
+
+                    muteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        video.muted = !video.muted;
+                        muteIcon.innerHTML = video.muted ? MUTE_ICON : UNMUTE_ICON;
+                    });
+                })();
+            </script>
             <div class="grid sm:grid-cols-3 gap-10 text-center">
                 <div>
                     <div class="mx-auto w-14 h-14 rounded-full bg-navy-50 flex items-center justify-center text-navy-700">
@@ -170,8 +265,19 @@
         </div>
     </section>
 
+    <!-- For students and parents -->
+    <section class="snap-fill max-w-3xl mx-auto px-6 py-14 text-center">
+        <h2 class="font-title text-2xl text-navy-900">Made for students. Trusted by parents.</h2>
+        <p class="mt-4 text-slate-600 leading-relaxed">
+            TutorMate isn't an answer machine. When you upload an assignment, it checks your work and explains
+            what's right, what's off, and why, so you actually understand the material. When you want to
+            practice, it builds a quiz from your notes or any topic you type in. It's a study partner, not a
+            shortcut, which is why students <em>and</em> parents feel good about it.
+        </p>
+    </section>
+
     <!-- Pricing -->
-    <section id="pricing" class="snap-section snap-fill max-w-3xl mx-auto px-6 py-10 text-center">
+    <section id="pricing" class="snap-fill max-w-3xl mx-auto px-6 py-10 text-center">
         <h2 class="font-title text-2xl text-navy-900">Simple pricing</h2>
         <p class="mt-3 text-slate-600">Start free. Upgrade any time, on the web or in the app.</p>
         <div class="mt-10 grid sm:grid-cols-2 gap-6 max-w-xl mx-auto">
@@ -196,7 +302,7 @@
         <p class="mt-8 text-xs text-slate-400">You'll be asked to log in first if you aren't already.</p>
     </section>
 
-    <footer class="bg-navy-900 snap-section">
+    <footer class="bg-navy-900">
         <div class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p class="text-xs text-navy-200">&copy; 2026 TutorMate. All rights reserved.</p>
             <div class="flex gap-5 text-xs text-navy-200">
