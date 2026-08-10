@@ -184,6 +184,7 @@
                         <button id="home-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Home</button>
                         <button id="my-folders-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">My Folders</button>
                         <button id="manage-subscription-link" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Manage Subscription</button>
+                        <button id="change-password-link" class="hidden px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Change Password</button>
                         <button id="signout-btn" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 w-full text-left">Sign Out</button>
                     </div>
                 </div>
@@ -440,6 +441,9 @@
                 <div id="login-panel" class="hidden space-y-4 mt-6">
                     <input id="login-email" type="email" placeholder="Email address" autocomplete="email" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
                     <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" required class="block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500 sm:text-sm bg-white dark:bg-slate-700">
+                    <div class="text-right -mt-2">
+                        <a id="forgot-password-link" class="text-sm text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">Forgot password?</a>
+                    </div>
                     <button id="email-login-btn" type="button" class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-navy-800 hover:bg-navy-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-700">Log In</button>
                 </div>
             </div>
@@ -495,7 +499,8 @@
             signOut,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
-            sendEmailVerification
+            sendEmailVerification,
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { 
             getFirestore,
@@ -631,6 +636,7 @@
             const signupPassword = document.getElementById('signup-password');
             const loginEmail = document.getElementById('login-email');
             const loginPassword = document.getElementById('login-password');
+            const forgotPasswordLink = document.getElementById('forgot-password-link');
             const signupTabBtn = document.getElementById('signup-tab-btn');
             const loginTabBtn = document.getElementById('login-tab-btn');
             const signupPanel = document.getElementById('signup-panel');
@@ -638,6 +644,7 @@
             const homeLink = document.getElementById('home-link');
             const myFoldersLink = document.getElementById('my-folders-link');
             const manageSubscriptionLink = document.getElementById('manage-subscription-link');
+            const changePasswordLink = document.getElementById('change-password-link');
             const usernameDisplay = document.getElementById('username-display');
             const menuBtn = document.getElementById('menu-btn');
             const mobileMenu = document.getElementById('mobile-menu');
@@ -856,6 +863,53 @@
             mobileMenu.classList.add('hidden'); // Close menu
             openBillingPortal();
         });
+
+        changePasswordLink.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden'); // Close menu
+            sendChangePasswordEmail();
+        });
+
+        forgotPasswordLink.addEventListener('click', () => {
+            sendForgotPasswordEmail();
+        });
+
+        // Sends a password-reset email to the signed-in user's own address -
+        // matches the iOS app's "Reset Password" (no in-place change, no
+        // reauthentication prompt, just a link they click).
+        async function sendChangePasswordEmail() {
+            if (!auth || !auth.currentUser || !auth.currentUser.email) return;
+            try {
+                await sendPasswordResetEmail(auth, auth.currentUser.email);
+                showAlert(
+                    'Check Your Email',
+                    `We sent a password reset link to ${auth.currentUser.email}.`,
+                    'success'
+                );
+            } catch (error) {
+                showAlert('Something went wrong', error.message || "We couldn't send the reset email.");
+            }
+        }
+
+        // Sends a password-reset email from the login form, for someone who
+        // can't sign in at all. Uses whatever they've typed in the email
+        // field, if anything.
+        async function sendForgotPasswordEmail() {
+            const email = loginEmail.value.trim();
+            if (!email) {
+                showAlert('Enter Your Email', 'Type your email address above first, then tap "Forgot password?" again.');
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                showAlert(
+                    'Check Your Email',
+                    `If an account exists for ${email}, we've sent a password reset link.`,
+                    'success'
+                );
+            } catch (error) {
+                showAlert('Something went wrong', error.message || "We couldn't send the reset email.");
+            }
+        }
 
         // Redirects to a Stripe Checkout Session for the given plan
         // ('monthly' or 'annual'). Requires a logged-in, non-anonymous user.
@@ -1150,6 +1204,10 @@
                 currentUserId = user.uid;
                 saveQuizBtn.classList.remove('hidden');
                 usernameDisplay.textContent = user.displayName || user.email; // Show name or email
+                // Google-only accounts have no password to change.
+                const isPasswordUser = user.providerData.some(p => p.providerId === 'password');
+                changePasswordLink.classList.toggle('hidden', !isPasswordUser);
+                changePasswordLink.classList.toggle('block', isPasswordUser);
                 saveAssignmentBtn.classList.remove('hidden');
                 folderSelectionContainer.classList.remove('hidden');
                 if (imageDataArray.length > 0) {
@@ -1189,6 +1247,8 @@
                 saveQuizBtn.classList.add('hidden');
                 saveAssignmentBtn.classList.add('hidden');
                 saveOnlyBtn.classList.add('hidden');
+                changePasswordLink.classList.add('hidden');
+                changePasswordLink.classList.remove('block');
                 usernameDisplay.textContent = ''; // Clear username
                 // Force the main screen to show
                 resetApp();
