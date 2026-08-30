@@ -12,6 +12,10 @@ const FIREBASE_JWKS_URL =
 const FREE_LIMIT = 10;
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
 
+// Sentinel meaning "Gemini hasn't sent response headers yet" — see the race in
+// step 4. A unique symbol so it can never collide with a real Response.
+const SLOW = Symbol('gemini-headers-pending');
+
 let jwks = null;
 async function verifyFirebaseToken(token) {
   const { createRemoteJWKSet, jwtVerify } = await import('jose');
@@ -218,11 +222,22 @@ export default async (req, context) => {
     const model = 'gemini-3.6-flash';
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`;
 
-    // 4. Call the Gemini API. `fetch` resolves as soon as the response headers
-    // arrive, so an outright rejection (bad key, quota, malformed payload) is
-    // still caught here and returned with a real error status — before we've
-    // committed to a 200 by opening our own stream.
-    const geminiResponse = await fetch(`${apiUrl}?alt=sse&key=${apiKey}`, {
+    // 4. Call the Gemini API.
+    //
+    // `fetch` resolves when the response HEADERS arrive — but Gemini can spend
+    // a long time reading an image before it emits anything at all (measured:
+    // 27–31s time-to-first-byte for a dense handwritten worksheet + a 50
+    // question quiz). Awaiting that outright would send zero bytes for the
+    // whole window and trip the same ~30s inactivity timeout we're trying to
+    // avoid, so we race the headers against a deadline that lands safely
+    // inside it:
+    //
+    //   • headers back before the deadline (the usual case) — behave exactly
+    //     as a normal request and keep real HTTP error statuses;
+    //   • still waiting at the deadline — open the keep-alive stream *now*,
+    //     before the guillotine, and finish the work inside it.
+    const HEADERS_DEADLINE_MS = 20000;
+    const geminiRequest = fetch(`${apiUrl}?alt=sse&key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -230,12 +245,30 @@ export default async (req, context) => {
       body: JSON.stringify(payload),
     });
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.json().catch(() => ({}));
-      console.error('Gemini API Error:', JSON.stringify(errorBody, null, 2));
-      // Pass the specific error message from the API back to the client
-      const errorMessage = errorBody.error?.message || `API request failed with status ${geminiResponse.status}`;
-      throw new Error(errorMessage);
+    let deadlineTimer;
+    const deadline = new Promise((resolve) => {
+      deadlineTimer = setTimeout(() => resolve(SLOW), HEADERS_DEADLINE_MS);
+    });
+    // Capture a rejection as a value rather than letting it escape the race —
+    // the stream below awaits this same promise and would otherwise trigger an
+    // unhandled rejection.
+    const raced = await Promise.race([
+      geminiRequest.then((r) => r, (requestError) => ({ requestError })),
+      deadline,
+    ]);
+    clearTimeout(deadlineTimer);
+
+    // Fast path: we know the outcome before committing to a 200, so any
+    // failure can still be surfaced with a real HTTP error status.
+    if (raced !== SLOW) {
+      if (raced.requestError) throw raced.requestError;
+      if (!raced.ok) {
+        const errorBody = await raced.json().catch(() => ({}));
+        console.error('Gemini API Error:', JSON.stringify(errorBody, null, 2));
+        // Pass the specific error message from the API back to the client
+        const errorMessage = errorBody.error?.message || `API request failed with status ${raced.status}`;
+        throw new Error(errorMessage);
+      }
     }
 
     // 5. Reassemble the SSE stream into the single response shape both clients
@@ -256,6 +289,17 @@ export default async (req, context) => {
         };
 
         try {
+          // On the slow path the headers still haven't landed; keep-alive is
+          // already running, so it's safe to wait for them here.
+          const geminiResponse = raced === SLOW ? await geminiRequest : raced;
+          if (!geminiResponse.ok) {
+            const errorBody = await geminiResponse.json().catch(() => ({}));
+            console.error('Gemini API Error:', JSON.stringify(errorBody, null, 2));
+            throw new Error(
+              errorBody.error?.message || `API request failed with status ${geminiResponse.status}`
+            );
+          }
+
           const reader = geminiResponse.body.getReader();
           const decoder = new TextDecoder();
           let buffer = '';
