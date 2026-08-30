@@ -204,15 +204,25 @@ export default async (req, context) => {
       }
     }
 
-    // 3. Construct the correct Gemini API URL
-    // This is the simple, correct URL for the API you enabled.
-    // It does not use project ID or region.
-    // Using the model you had in your uploaded file:
+    // 3. Construct the correct Gemini API URL.
+    //
+    // We call the STREAMING endpoint (`streamGenerateContent?alt=sse`) rather
+    // than `generateContent`, for a reason that has nothing to do with wanting
+    // token-by-token output: the edge in front of these functions enforces a
+    // ~30s *inactivity* timeout ("Too much time has passed without sending any
+    // data for document") and kills the connection with a 504. A buffered call
+    // sends zero bytes while Gemini thinks, so any generation slower than ~30s
+    // — long quizzes, and especially multi-page homework photos — died there.
+    // Streaming lets us emit bytes continuously (see `keepAlive` below), which
+    // resets that timer and removes the ceiling entirely.
     const model = 'gemini-3.6-flash';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent`;
 
-    // 4. Call the Gemini API
-    const geminiResponse = await fetch(`${apiUrl}?key=${apiKey}`, { // API key as query param
+    // 4. Call the Gemini API. `fetch` resolves as soon as the response headers
+    // arrive, so an outright rejection (bad key, quota, malformed payload) is
+    // still caught here and returned with a real error status — before we've
+    // committed to a 200 by opening our own stream.
+    const geminiResponse = await fetch(`${apiUrl}?alt=sse&key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -221,28 +231,105 @@ export default async (req, context) => {
     });
 
     if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.json(); // Use .json() to get the error details
+      const errorBody = await geminiResponse.json().catch(() => ({}));
       console.error('Gemini API Error:', JSON.stringify(errorBody, null, 2));
       // Pass the specific error message from the API back to the client
       const errorMessage = errorBody.error?.message || `API request failed with status ${geminiResponse.status}`;
       throw new Error(errorMessage);
     }
 
-    // 5. Web only: spend a free credit on a successful generation, and
-    // attach updated usage info so the UI can show "X of 10 free uses left".
-    // Skipped entirely for the iOS app (see the isWebClient check above).
-    const data = await geminiResponse.json();
-    if (isWebClient) {
-      const newUsageCount = usage.usageCount + 1;
-      await incrementUsage(uid, idToken, newUsageCount);
-      data._usage = {
-        count: newUsageCount,
-        limit: FREE_LIMIT,
-        subscribed: isSubscribedUsage(usage),
-        subscriptionSource: subscriptionSourceOf(usage),
-      };
-    }
-    return new Response(JSON.stringify(data), {
+    // 5. Reassemble the SSE stream into the single response shape both clients
+    // already expect, while trickling whitespace to hold the connection open.
+    // JSON parsers ignore leading whitespace (verified on Swift's JSONDecoder
+    // and browser JSON.parse), so this needs no client-side change.
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const ping = () => {
+          try { controller.enqueue(encoder.encode(' ')); } catch { /* already closed */ }
+        };
+        // Belt and braces: Gemini's own chunks usually keep us well under the
+        // limit, but this covers any long pause before or between them.
+        let keepAlive = setInterval(ping, 3000);
+        const stopKeepAlive = () => {
+          if (keepAlive) { clearInterval(keepAlive); keepAlive = null; }
+        };
+
+        try {
+          const reader = geminiResponse.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let fullText = '';
+          let lastChunk = null;
+
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            ping(); // real activity from Gemini also resets the timer
+            buffer += decoder.decode(value, { stream: true });
+
+            let newlineIndex;
+            while ((newlineIndex = buffer.indexOf('\n')) >= 0) {
+              const line = buffer.slice(0, newlineIndex).trim();
+              buffer = buffer.slice(newlineIndex + 1);
+              if (!line.startsWith('data:')) continue;
+              const jsonStr = line.slice(5).trim();
+              if (!jsonStr || jsonStr === '[DONE]') continue;
+              try {
+                const chunk = JSON.parse(jsonStr);
+                lastChunk = chunk;
+                const parts = chunk?.candidates?.[0]?.content?.parts;
+                if (Array.isArray(parts)) {
+                  fullText += parts.map((p) => p.text || '').join('');
+                }
+              } catch {
+                // A partial line can't be parsed yet; the next read completes it.
+              }
+            }
+          }
+
+          stopKeepAlive();
+
+          const data = {
+            candidates: [
+              {
+                content: { parts: [{ text: fullText }] },
+                finishReason: lastChunk?.candidates?.[0]?.finishReason ?? null,
+              },
+            ],
+            usageMetadata: lastChunk?.usageMetadata ?? null,
+          };
+
+          // Web only: spend a free credit on a successful generation, and
+          // attach updated usage info so the UI can show "X of 10 free uses
+          // left". Skipped entirely for the iOS app (see isWebClient above).
+          if (isWebClient) {
+            const newUsageCount = usage.usageCount + 1;
+            await incrementUsage(uid, idToken, newUsageCount);
+            data._usage = {
+              count: newUsageCount,
+              limit: FREE_LIMIT,
+              subscribed: isSubscribedUsage(usage),
+              subscriptionSource: subscriptionSourceOf(usage),
+            };
+          }
+
+          controller.enqueue(encoder.encode(JSON.stringify(data)));
+          controller.close();
+        } catch (streamError) {
+          // The 200 and some whitespace are already on the wire by now, so the
+          // status can't be changed; surface the failure in the body instead.
+          stopKeepAlive();
+          console.error('Error streaming from Gemini:', streamError);
+          try {
+            controller.enqueue(encoder.encode(JSON.stringify({ error: streamError.message })));
+            controller.close();
+          } catch { /* already closed */ }
+        }
+      },
+    });
+
+    return new Response(stream, {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
