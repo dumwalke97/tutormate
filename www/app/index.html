@@ -535,6 +535,65 @@
             return '';
         }
 
+        // --- In-App Review ---
+        // Apple's sheet is rate-limited on their side and silently does nothing
+        // once a user has seen it enough, so we spend those few chances at the
+        // app's peak-satisfaction moment: a high-scoring quiz, and never on the
+        // first session.
+        const REVIEW_STATE_KEY = 'tutormate.review';
+        const REVIEW_MIN_SCORE_PERCENT = 80;
+        const REVIEW_MIN_QUIZZES = 3;   // skips the first session by construction
+        const REVIEW_MIN_AGE_DAYS = 3;  // and a first session that binges quizzes
+        const REVIEW_COOLDOWN_DAYS = 120;
+        const DAY_MS = 24 * 60 * 60 * 1000;
+
+        function loadReviewState() {
+            try {
+                const raw = localStorage.getItem(REVIEW_STATE_KEY);
+                const parsed = raw ? JSON.parse(raw) : null;
+                if (parsed && typeof parsed === 'object') return parsed;
+            } catch (e) {
+                // Private browsing or corrupt JSON: fall through to a fresh state.
+            }
+            return { firstSeenAt: Date.now(), goodQuizzes: 0, lastPromptedAt: 0 };
+        }
+
+        function saveReviewState(state) {
+            try {
+                localStorage.setItem(REVIEW_STATE_KEY, JSON.stringify(state));
+            } catch (e) {
+                // Nothing to do; worst case we simply never prompt.
+            }
+        }
+
+        // Called once per finished quiz. Counts the good ones and, when every
+        // condition lines up, hands off to the native plugin.
+        async function maybeAskForReview(percentage) {
+            if (!window.Capacitor || !window.Capacitor.isNativePlatform()) return;
+            if (percentage < REVIEW_MIN_SCORE_PERCENT) return;
+
+            const state = loadReviewState();
+            if (!state.firstSeenAt) state.firstSeenAt = Date.now();
+            state.goodQuizzes = (state.goodQuizzes || 0) + 1;
+            saveReviewState(state);
+
+            const now = Date.now();
+            if (state.goodQuizzes < REVIEW_MIN_QUIZZES) return;
+            if (now - state.firstSeenAt < REVIEW_MIN_AGE_DAYS * DAY_MS) return;
+            if (state.lastPromptedAt && now - state.lastPromptedAt < REVIEW_COOLDOWN_DAYS * DAY_MS) return;
+
+            const plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.AppReview;
+            if (!plugin) return;
+
+            try {
+                await plugin.requestReview();
+                state.lastPromptedAt = now;
+                saveReviewState(state);
+            } catch (e) {
+                console.error('Review prompt failed:', e);
+            }
+        }
+
         async function initializeAppAndServices() {
             try {
                 // Fetch config using the dynamic base URL
@@ -2254,6 +2313,8 @@ CRITICAL: The 'answer' field is MANDATORY for every question. It must be an exac
                 displayQuestion();
             } else {
                 showResults();
+                // Peak-satisfaction moment: ask for an App Store rating if earned.
+                maybeAskForReview((score / quizData.length) * 100);
             }
         }
 

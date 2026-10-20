@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TutorMate App Store Screenshots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* App Store iPhone 6.9" primary size. Do not change without re-reading
+     Apple's current spec; 1320x2868 has been mandatory since 2025. */
+  :root {
+    --w: 1320px;
+    --h: 2868px;
+
+    --navy: #1e2f6e;
+    --navy-deep: #16215c;
+    --navy-ink: #1b2b63;
+    --yellow: #FBD535;
+    --screen: #F1F5F9;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --green: #22c55e;
+    --green-bg: #dcfce7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #111;
+    font-family: 'Poppins', -apple-system, system-ui, sans-serif;
+  }
+
+  .frame {
+    position: relative;
+    width: var(--w);
+    height: var(--h);
+    overflow: hidden;
+    background:
+      radial-gradient(130% 70% at 50% -8%, #2c3f91 0%, #1d2c70 38%, #101a4a 68%, #070c24 100%);
+    display: none;
+  }
+  .frame.active { display: block; }
+
+  /* --- Shared copy block --- */
+  .copy {
+    position: absolute;
+    top: 170px;
+    left: 70px;
+    right: 70px;
+    text-align: center;
+  }
+  .headline {
+    font-weight: 800;
+    font-size: 108px;
+    line-height: 1.16;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .headline .hi { color: var(--yellow); }
+  .headline.small { font-size: 92px; }
+  .sub {
+    margin-top: 32px;
+    font-weight: 400;
+    font-size: 48px;
+    line-height: 1.33;
+    color: rgba(255,255,255,0.88);
+  }
+
+  /* --- Phone mockup --- */
+  .phone {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 900px;
+    width: 1096px;
+    height: 2100px;
+    background: #0b1020;
+    border-radius: 78px;
+    padding: 14px;
+    box-shadow: 0 60px 120px rgba(0,0,0,0.45);
+  }
+  .phone.pair {
+    width: 620px;
+    height: 2000px;
+    left: auto;
+    transform: none;
+    border-radius: 56px;
+  }
+  .screen {
+    width: 100%;
+    height: 100%;
+    background: var(--screen);
+    border-radius: 66px;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: #0f172a;
+  }
+  .phone.pair .screen { border-radius: 44px; }
+
+  /* --- Device UI primitives --- */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 46px 48px 30px;
+  }
+  .nav-title { font-size: 46px; font-weight: 700; }
+  .nav .chev, .nav .x { font-size: 44px; color: #334155; }
+
+  .card {
+    background: #fff;
+    border-radius: 36px;
+    margin: 0 36px 28px;
+    padding: 40px;
+  }
+  .card.navy {
+    background: var(--navy-ink);
+    color: #fff;
+  }
+
+  .q { font-size: 36px; font-weight: 700; line-height: 1.38; margin-bottom: 14px; }
+  .q .lab { font-weight: 700; }
+  .a-ok { color: #16a34a; font-weight: 600; }
+  .muted { color: var(--slate-500); }
+
+  .opt {
+    background: #eef2f7;
+    border-radius: 26px;
+    padding: 30px 34px;
+    font-size: 36px;
+    color: #475569;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .opt.correct { background: var(--green-bg); color: #16a34a; font-weight: 600; }
+  .tick {
+    width: 48px; height: 48px; border-radius: 999px;
+    background: var(--green); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700;
+  }
+
+  .btn {
+    background: var(--navy-ink);
+    color: #fff;
+    border-radius: 26px;
+    padding: 34px;
+    text-align: center;
+    font-size: 40px;
+    font-weight: 700;
+    margin: 0 36px 22px;
+  }
+  .btn.light { background: #d8dee9; color: var(--navy-ink); }
+  .btn.ghost { background: transparent; color: var(--slate-500); font-weight: 500; }
+  .btn.white { background: #fff; color: var(--navy-ink); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.14);
+    border-radius: 999px;
+    padding: 16px 30px;
+    font-size: 32px;
+    font-weight: 600;
+  }
+
+  .chips { display: flex; gap: 16px; margin: 10px 0 30px; }
+  .chip {
+    flex: 1; text-align: center;
+    background: #eef2f7; border-radius: 999px;
+    padding: 22px 0; font-size: 34px; font-weight: 500; color: #334155;
+  }
+  .chip.on { background: var(--navy-ink); color: #fff; font-weight: 600; }
+
+  .input {
+    background: #eef2f7; border-radius: 24px;
+    padding: 30px 32px; font-size: 36px; color: var(--slate-400);
+    margin-bottom: 28px;
+  }
+
+  /* --- Frame 1: split worksheet -> quiz --- */
+  .split { position: absolute; top: 900px; left: 0; right: 0; height: 1968px; }
+  .split .phone.pair.left  { left: 56px;  top: 60px; transform: rotate(-4deg); }
+  .split .phone.pair.right { right: 56px; top: 0;    transform: rotate(4deg); }
+  .arrow {
+    position: absolute; left: 50%; top: 820px;
+    transform: translate(-50%, -50%);
+    width: 150px; height: 150px; border-radius: 999px;
+    background: var(--yellow);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 74px; font-weight: 800; color: #16215c;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    z-index: 5;
+  }
+  .worksheet {
+    height: 100%;
+    background: #fbfaf7;
+    padding: 56px 44px;
+    font-family: 'Inter', sans-serif;
+  }
+  .worksheet h4 { font-size: 34px; margin-bottom: 36px; color: #1f2937; }
+  .worksheet .line {
+    height: 18px; border-radius: 9px; background: #e3e1dc; margin-bottom: 26px;
+  }
+  .worksheet .line.s { width: 62%; }
+  .worksheet .line.m { width: 85%; }
+  .worksheet .rule {
+    height: 2px; background: #d9d5cc; margin: 40px 0;
+  }
+
+  /* --- Frame 3: social proof --- */
+  .stars {
+    position: absolute; top: 1180px; left: 0; right: 0;
+    text-align: center;
+    font-size: 150px;
+    color: var(--yellow);
+    letter-spacing: 18px;
+  }
+  .rating-num {
+    position: absolute; top: 1230px; left: 0; right: 0;
+    text-align: center;
+    font-size: 230px; font-weight: 800; color: #fff; line-height: 1;
+  }
+  .quote {
+    position: absolute; top: 1760px; left: 110px; right: 110px;
+    background: #fff; border-radius: 56px; padding: 76px 68px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.35);
+    text-align: center;
+  }
+  .quote p {
+    font-size: 58px; font-weight: 700; line-height: 1.3; color: #0f172a;
+  }
+  .quote .who {
+    margin-top: 34px; font-size: 36px; color: var(--slate-500);
+    font-family: 'Inter', sans-serif;
+  }
+  .quote .mini { color: var(--yellow); font-size: 48px; letter-spacing: 8px; margin-bottom: 30px; }
+
+  /* --- Frame 8: closing CTA --- */
+  .cta-wrap {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 110px; text-align: center;
+  }
+  .cta-icon {
+    width: 360px; height: 360px; border-radius: 84px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.45);
+    margin-bottom: 90px;
+  }
+  .cta-icon img { width: 250px; }
+  .cta-wrap .headline { font-size: 116px; }
+  .cta-wrap .sub { font-size: 54px; margin-top: 44px; }
+  .cta-btn {
+    margin-top: 90px;
+    background: var(--yellow); color: #16215c;
+    border-radius: 999px; padding: 44px 90px;
+    font-size: 54px; font-weight: 800;
+  }
+  .cta-note {
+    margin-top: 44px; font-size: 36px; color: rgba(255,255,255,0.65);
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* --- Frame 7: folders --- */
+  .folder {
+    display: flex; align-items: center; gap: 30px;
+    background: #fff; border-radius: 32px;
+    margin: 0 36px 24px; padding: 36px 40px;
+  }
+  .folder .ico {
+    width: 84px; height: 84px; border-radius: 24px;
+    background: #e5ecfb; color: var(--navy-ink);
+    display: flex; align-items: center; justify-content: center; font-size: 42px;
+  }
+  .folder .t { font-size: 40px; font-weight: 600; }
+  .folder .s { font-size: 32px; color: var(--slate-500); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- 1. Split worksheet-to-quiz. Replaces the old empty home screen behind the
+     Log In / Sign Up bar; slot 1 does most of the conversion work. -->
+<section class="frame" data-name="01_snap_to_quiz">
+  <div class="copy">
+    <div class="headline">Snap a worksheet,<br><span class="hi">get a quiz</span></div>
+    <div class="sub">Point your camera at tonight's homework.<br>A practice quiz comes back in seconds.</div>
+  </div>
+  <div class="split">
+    <div class="phone pair left">
+      <div class="screen">
+        <div class="worksheet">
+          <h4>Unit 4 &mdash; The American Revolution</h4>
+          <div class="line m"></div><div class="line"></div><div class="line s"></div>
+          <div class="rule"></div>
+          <div class="line"></div><div class="line m"></div><div class="line s"></div>
+          <div class="rule"></div>
+          <div class="line m"></div><div class="line"></div><div class="line s"></div>
+          <div class="rule"></div>
+          <div class="line"></div><div class="line s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="phone pair right">
+      <div class="screen">
+        <div class="nav"><span></span><span style="text-align:center"><span class="nav-title" style="font-size:38px">Quiz Time</span><div style="font-size:26px;color:var(--slate-500);margin-top:4px">Question 1 of 10</div></span><span class="x">&times;</span></div>
+        <div class="card" style="margin:0 24px 20px; padding:30px; border-radius:28px">
+          <div class="q" style="font-size:30px">What year did the Declaration of Independence get signed?</div>
+          <div class="opt correct" style="font-size:27px; padding:22px 24px; border-radius:20px">1776 <span class="tick" style="width:36px;height:36px;font-size:21px">&#10003;</span></div>
+          <div class="opt" style="font-size:27px; padding:22px 24px; border-radius:20px">1783</div>
+          <div class="opt" style="font-size:27px; padding:22px 24px; border-radius:20px">1812</div>
+          <div class="opt" style="font-size:27px; padding:22px 24px; border-radius:20px; margin-bottom:0">1620</div>
+        </div>
+        <div style="margin:0 24px 18px"><span class="pill" style="background:var(--green-bg);color:#16a34a;font-size:26px;padding:12px 22px"><span class="tick" style="width:32px;height:32px;font-size:19px">&#10003;</span> Correct!</span></div>
+        <div class="btn" style="margin:0 24px; font-size:30px; padding:26px; border-radius:20px">Next Question</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Homework checking -->
+<section class="frame" data-name="02_check_homework">
+  <div class="copy">
+    <div class="headline">Check homework<br><span class="hi">before</span> you turn it in</div>
+    <div class="sub">Snap a photo. See what's right, what's<br>wrong, and why.</div>
+  </div>
+  <div class="phone">
+    <div class="screen">
+      <div class="nav"><span class="chev">&lsaquo;</span><span class="nav-title">Assignment Feedback</span><span style="width:40px"></span></div>
+      <div class="card">
+        <div class="q"><span class="lab">Question:</span> What year did the Declaration of Independence get signed?</div>
+        <div class="q"><span class="lab">Student's Answer:</span> <span class="a-ok">1776</span></div>
+        <div class="q"><span class="lab">Correct Answer:</span> 1776</div>
+        <div class="q muted" style="font-weight:400"><span class="lab" style="color:#0f172a">Explanation:</span> The Declaration of Independence was adopted and signed in the year 1776.</div>
+        <div style="height:28px"></div>
+        <div class="q"><span class="lab">Question:</span> Who was the first President of the United States?</div>
+        <div class="q"><span class="lab">Student's Answer:</span> <span class="a-ok">George Washington</span></div>
+        <div class="q"><span class="lab">Correct Answer:</span> George Washington</div>
+        <div class="q muted" style="font-weight:400"><span class="lab" style="color:#0f172a">Explanation:</span> George Washington was elected as the first President of the United States, serving from 1789 to 1797.</div>
+        <div style="height:28px"></div>
+        <div class="q"><span class="lab">Question:</span> What event is often cited as a major spark for the Revolution?</div>
+        <div class="q"><span class="lab">Student's Answer:</span> <span class="a-ok">The Boston Tea Party</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Social proof. The rubric expects it by slot 3 and the 5.0 is genuine. -->
+<section class="frame" data-name="03_social_proof">
+  <div class="copy">
+    <div class="headline small">5.0 stars from<br><span class="hi">parents and students</span></div>
+  </div>
+  <div class="rating-num">5.0</div>
+  <div class="stars" style="top:1560px">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+  <div class="quote" style="top:1820px">
+    <p>&ldquo;This is a game changing<br>study aid!&rdquo;</p>
+    <div class="who">App Store review</div>
+  </div>
+</section>
+
+<!-- 4. Practice, not answer-copying -->
+<section class="frame" data-name="04_study_not_copy">
+  <div class="copy">
+    <div class="headline">Study it.<br><span class="hi">Don't copy it.</span></div>
+    <div class="sub">Practice quizzes with instant feedback, not<br>handed-over answers.</div>
+  </div>
+  <div class="phone">
+    <div class="screen">
+      <div class="nav">
+        <span style="width:60px"></span>
+        <span style="text-align:center"><span class="nav-title">Quiz Time</span><div style="font-size:34px;color:var(--slate-500);margin-top:6px">Question 1 of 10</div></span>
+        <span class="x">&times;</span>
+      </div>
+      <div class="card">
+        <div class="q" style="font-size:44px; margin-bottom:36px">What event triggered the official beginning of World War II in Europe?</div>
+        <div class="opt correct">The invasion of Poland by Germany <span class="tick">&#10003;</span></div>
+        <div class="opt">The assassination of Archduke Franz Ferdinand</div>
+        <div class="opt">The bombing of Pearl Harbor</div>
+        <div class="opt" style="margin-bottom:0">The signing of the Pact of Steel</div>
+      </div>
+      <div style="margin:0 36px 24px"><span class="pill" style="background:var(--green-bg);color:#16a34a"><span class="tick" style="width:40px;height:40px;font-size:24px">&#10003;</span> Correct!</span></div>
+      <div class="btn">Next Question</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Topic quizzes -->
+<section class="frame" data-name="05_any_topic">
+  <div class="copy">
+    <div class="headline">Quiz yourself on<br><span class="hi">any topic</span></div>
+    <div class="sub">Type a subject and get 5 to 50 questions,<br>ready to go.</div>
+  </div>
+  <div class="phone">
+    <div class="screen">
+      <div class="card navy" style="margin:36px 36px 28px">
+        <div style="font-size:54px;font-weight:700;margin-bottom:12px">Learn smarter.</div>
+        <div style="font-size:36px;color:rgba(255,255,255,0.82);margin-bottom:28px">Snap an assignment or build a quiz on any topic.</div>
+        <div class="pill">&#10022; 7 of 10 free uses left</div>
+        <div class="btn white" style="margin:32px 0 0"><svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor" style="vertical-align:-8px"><path d="M9 3l-1.5 2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.5L15 3H9zm3 5.5A4.5 4.5 0 1 1 7.5 13 4.5 4.5 0 0 1 12 8.5z"/></svg>&nbsp; Add Images / Files</div>
+      </div>
+      <div class="card">
+        <div style="font-size:48px;font-weight:600;margin-bottom:10px">Quiz from a topic</div>
+        <div style="font-size:36px;color:var(--slate-500);margin-bottom:30px">Type a subject and we'll build a quiz for it.</div>
+        <div class="input">e.g., 'US State Capitals'</div>
+        <div style="font-size:34px;color:#334155;margin-bottom:6px">Number of questions</div>
+        <div class="chips">
+          <div class="chip">5</div><div class="chip on">10</div><div class="chip">20</div>
+          <div class="chip">30</div><div class="chip">40</div><div class="chip">50</div>
+        </div>
+        <div class="btn" style="margin:0">&#10022;&nbsp; Generate Quiz</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Results / retake -->
+<section class="frame" data-name="06_track_progress">
+  <div class="copy">
+    <div class="headline">Walk into the test<br><span class="hi">ready</span></div>
+    <div class="sub">Review answers, retake quizzes, and track<br>your score.</div>
+  </div>
+  <div class="phone">
+    <div class="screen">
+      <div class="card" style="margin:36px 36px 28px; text-align:center; padding:66px 40px">
+        <div style="font-size:56px;font-weight:700">Quiz Complete!</div>
+        <div style="font-size:140px;font-weight:800;color:var(--navy-ink);line-height:1.2;margin:14px 0">10 / 10</div>
+        <div style="font-size:40px;color:var(--slate-500)">Great job! You aced it!</div>
+      </div>
+      <div class="btn">Review Answers</div>
+      <div class="btn light">Retake Quiz</div>
+      <div class="btn ghost">Start Over</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Saved study sets -->
+<section class="frame" data-name="07_study_sets">
+  <div class="copy">
+    <div class="headline">Every study set<br><span class="hi">in one place</span></div>
+    <div class="sub">Save quizzes into folders and come back<br>the night before the test.</div>
+  </div>
+  <div class="phone">
+    <div class="screen">
+      <div class="nav"><span class="nav-title">My Folders</span><span class="x" style="font-size:52px">+</span></div>
+      <div class="folder"><div class="ico"><svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div><div><div class="t">US History</div><div class="s">6 quizzes &middot; last score 10/10</div></div></div>
+      <div class="folder"><div class="ico"><svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div><div><div class="t">Algebra 1</div><div class="s">4 quizzes &middot; last score 9/10</div></div></div>
+      <div class="folder"><div class="ico"><svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div><div><div class="t">Biology &mdash; Cells</div><div class="s">3 quizzes &middot; last score 8/10</div></div></div>
+      <div class="folder"><div class="ico"><svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div><div><div class="t">Spanish Vocab</div><div class="s">5 quizzes &middot; last score 10/10</div></div></div>
+      <div class="folder"><div class="ico"><svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div><div><div class="t">Chemistry Midterm</div><div class="s">2 quizzes &middot; last score 9/10</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Closing CTA -->
+<section class="frame" data-name="08_start_free">
+  <div class="cta-wrap">
+    <div class="cta-icon"><img src="../../www/Assets/TutorMateLogoTransparent.png" alt="TutorMate"></div>
+    <div class="headline">Start free</div>
+    <div class="sub">Your first 10 quizzes<br>are on us.</div>
+    <div class="cta-btn">Get TutorMate</div>
+    <div class="cta-note">No card. No account needed to try it.</div>
+  </div>
+</section>
+
+<script>
+  // Headless Chrome renders ?frame=NN and screenshots the viewport.
+  const frames = [...document.querySelectorAll('.frame')];
+  const want = new URLSearchParams(location.search).get('frame');
+  const picked = want
+    ? frames.find(f => f.dataset.name.startsWith(want))
+    : frames[0];
+  if (picked) picked.classList.add('active');
+  document.title = picked ? picked.dataset.name : 'no frame';
+</script>
+</body>
+</html>
