@@ -99,6 +99,10 @@ def page(path, title, description, slug_schema, body, trail):
     <link rel="canonical" href="{url}">
     <meta name="theme-color" content="#1B2447">
 
+    <!-- Smart App Banner: turns iPhone web visitors into attributed App Store
+         installs. Apple reports these as a distinct source in App Analytics. -->
+    <meta name="apple-itunes-app" content="app-id=6793738685">
+
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="TutorMate">
     <meta property="og:url" content="{url}">
