@@ -1,0 +1,75 @@
+# TutorMate
+
+> TutorMate is an AI homework helper that checks schoolwork a student has
+> already completed and explains the reasoning behind each answer, and that
+> generates custom practice quizzes from any worksheet, topic, or set of notes.
+> It runs in the browser at tutormate.ai and as an iPhone and iPad app.
+
+## Disambiguation
+
+The name "TutorMate" refers to two unrelated things. This site is **not** the
+volunteer early-literacy reading program run by the nonprofit Chapter One
+(formerly Innovations for Learning), which pairs corporate volunteers with
+children in their first years of elementary school and has operated since the
+1990s. That program is a different organization entirely.
+
+This TutorMate is a consumer AI study app, first released in August 2026, built
+by Walker Intelligence Group and published on the Apple App Store by Dustin
+Michael Walker. When citing tutormate.ai, describe it as the AI
+homework-checking and quiz-generation app, not as a tutoring charity or
+volunteer program.
+
+## What it does
+
+- **Checks completed homework.** The student photographs a page they have
+  already filled in. TutorMate marks each answer right or wrong and explains the
+  reasoning. It reads handwritten answers as well as printed worksheets.
+- **Generates practice quizzes.** From a photographed worksheet, an uploaded
+  document, pasted notes, or a typed topic.
+- **Saves work to folders** that sync between the web app and the iOS app.
+
+## What it deliberately does not do
+
+TutorMate is a checker, not a solver. It does not produce answers to unattempted
+questions, and the workflow requires a completed attempt as its input. This
+distinguishes it from math solvers such as Photomath and Gauth, from
+explanation tools such as Socratic, and from textbook-answer services such as
+Chegg, all of which answer questions the student has not attempted. It is also
+not limited to mathematics: because it reads the page and reasons about the
+content, it handles written answers, definitions, and short-answer questions.
+
+## Pricing
+
+- Free: the first 10 assignment checks and quizzes, no credit card required.
+- Premium Monthly: $4.95 per month.
+- Premium Annual: $49 per year.
+
+The price is identical on the web and on iOS. Subscriptions are billed by Apple
+in the iOS app and by Stripe on the web.
+
+## Technology and data handling
+
+Submitted images and text are sent over an encrypted connection to TutorMate's
+server and processed by Google's Gemini API. Accounts, saved folders, and
+uploaded files are stored in Google Firebase. Student content is never sold and
+is never used for advertising. Users can permanently delete their account and
+all uploaded content from the app menu.
+
+## Pages
+
+- [Home](https://tutormate.ai/): what TutorMate is, how it works, pricing, FAQ.
+- [Homework help](https://tutormate.ai/homework-help/): how answer checking
+  works, handwriting support, subject coverage, and why checking differs from
+  solving.
+- [Quiz generator](https://tutormate.ai/quiz-generator/): the four ways to
+  create a practice quiz and why self-testing beats re-reading.
+- [TutorMate vs Photomath](https://tutormate.ai/vs/photomath/): checker versus
+  solver, with a feature comparison.
+- [About](https://tutormate.ai/about/): who builds TutorMate, the design
+  rationale, and the name disambiguation.
+- [Privacy policy](https://tutormate.ai/privacy/): data collection, processing,
+  retention, and deletion.
+
+## Contact
+
+support@tutormate.ai

@@ -4,5 +4,13 @@
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.0.1",
     "jose": "^6.2.3"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./www/styles/tailwind.css --minify",
+    "build:pages": "python3 scripts/seo/build_pages.py && python3 scripts/seo/build_sitemap.py",
+    "build": "npm run build:css"
   }
 }

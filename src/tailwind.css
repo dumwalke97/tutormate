@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Nunito 800, self-hosted. Avoids two extra origins on the critical path and
+   the layout shift the Google Fonts swap used to cause on the h1. */
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/nunito-800.woff2') format('woff2');
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.font-title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+}
+
+:root {
+  --nav-h: 4rem;
+}
+
+html {
+  scroll-padding-top: var(--nav-h);
+  scroll-behavior: smooth;
+}
+
+.snap-fill {
+  min-height: 100vh;
+  min-height: calc(100svh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

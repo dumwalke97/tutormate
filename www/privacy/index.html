@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy — TutorMate</title>
-    <link rel="icon" type="image/png" href="../Assets/TutorMateLogoTransparent.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Brand navy palette (matches the iOS app, replaces the old indigo scheme)
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            50: '#EEF1F8',
-                            200: '#B9C4DE',
-                            400: '#5B6B96',
-                            500: '#3C4A72',
-                            600: '#2A3760',
-                            700: '#202B52',
-                            800: '#1B2447',
-                            900: '#131A35'
-                        }
-                    }
-                }
-            }
-        };
-    </script>
+    <title>Privacy Policy | TutorMate</title>
+    <meta name="description" content="How TutorMate handles your data: what is stored, how uploaded schoolwork is processed, which providers are involved, and how to delete your account.">
+    <link rel="canonical" href="https://tutormate.ai/privacy/">
+    <meta name="theme-color" content="#1B2447">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="TutorMate">
+    <meta property="og:url" content="https://tutormate.ai/privacy/">
+    <meta property="og:title" content="Privacy Policy | TutorMate">
+    <meta property="og:description" content="How TutorMate handles your data: what is stored, how uploaded schoolwork is processed, which providers are involved, and how to delete your account.">
+    <meta property="og:image" content="https://tutormate.ai/Assets/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="icon" type="image/png" href="/Assets/TutorMateLogoTransparent.png">
+    <link rel="apple-touch-icon" href="/Assets/TutorMateLogoTransparent.png">
+    <link rel="preload" href="/fonts/nunito-800.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tailwind.css">
 </head>
 <body class="bg-slate-50 text-slate-800">
     <div class="max-w-3xl mx-auto px-6 py-12">
@@ -113,5 +107,55 @@
             <a href="/" class="text-navy-700 underline">← Back to TutorMate</a>
         </footer>
     </div>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://tutormate.ai/#publisher",
+      "name": "Walker Intelligence Group",
+      "url": "https://walkerig.com/",
+      "email": "support@tutormate.ai",
+      "founder": {
+        "@type": "Person",
+        "name": "Dustin Michael Walker"
+      }
+    },
+    {
+      "@type": "PrivacyPolicy",
+      "@id": "https://tutormate.ai/privacy/#page",
+      "name": "TutorMate Privacy Policy",
+      "url": "https://tutormate.ai/privacy/",
+      "inLanguage": "en",
+      "datePublished": "2026-07-07",
+      "publisher": {
+        "@id": "https://tutormate.ai/#publisher"
+      },
+      "about": {
+        "@id": "https://tutormate.ai/#app"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "TutorMate",
+          "item": "https://tutormate.ai/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Privacy Policy",
+          "item": "https://tutormate.ai/privacy/"
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
 </body>
 </html>

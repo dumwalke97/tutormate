@@ -1,0 +1,66 @@
+# TutorMate - https://tutormate.ai
+# Search crawlers and AI answer engines are welcome.
+
+User-agent: *
+Allow: /
+Disallow: /.netlify/
+
+# AI assistants and answer engines: explicitly allowed, so TutorMate can be
+# cited as a source. /app/ is the signed-in application shell, not content.
+User-agent: GPTBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /.netlify/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /.netlify/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /.netlify/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: CCBot
+Allow: /
+Disallow: /app/
+Disallow: /.netlify/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /.netlify/
+
+Sitemap: https://tutormate.ai/sitemap.xml

@@ -1,5 +1,60 @@
 [build]
   publish = "www"
   functions = "Netlify/Functions"
+  # Compiles src/tailwind.css to www/styles/tailwind.css. The marketing pages
+  # link that file instead of pulling the Tailwind CDN build, which was 127 KB
+  # of render-blocking JavaScript compiling CSS in every visitor's browser.
+  command = "npm run build:css"
 
+# ---------------------------------------------------------------------------
+# Redirects
+# ---------------------------------------------------------------------------
 
+# /index.html duplicates / and both return 200. Collapse to the canonical form.
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/app/index.html"
+  to = "/app/"
+  status = 301
+  force = true
+
+# ---------------------------------------------------------------------------
+# Headers
+# ---------------------------------------------------------------------------
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=(), interest-cohort=()"
+
+# The app shell is a signed-in surface, not content. Keep it crawlable (so the
+# directive is visible) but out of the index.
+[[headers]]
+  for = "/app/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, follow"
+
+# Fingerprint-free static assets. Safe to cache hard; bust by renaming.
+[[headers]]
+  for = "/Assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/styles/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

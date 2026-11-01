@@ -6,3 +6,10 @@
 
 # One-off scripts containing real user PII — never belongs in a public repo
 scripts/grandfather-beta-users.mjs
+
+# Local Claude Code permissions. Machine-specific, and past entries have
+# captured command arguments including credential material.
+.claude/settings.local.json
+
+# macOS Finder metadata
+.DS_Store

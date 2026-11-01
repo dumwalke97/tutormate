@@ -3,78 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>TutorMate: Check Your Work. Study Smarter.</title>
-    <meta name="description" content="TutorMate helps students check their assignments and build custom quizzes from a photo. Built to help you learn, not just hand you answers.">
+    <title>TutorMate: AI Homework Helper That Checks Your Work</title>
+    <meta name="description" content="TutorMate is an AI homework helper that checks work you already did and explains why. Turn any worksheet into a practice quiz. 10 free checks, then $4.95/mo.">
+    <link rel="canonical" href="https://tutormate.ai/">
+    <meta name="theme-color" content="#1B2447">
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TutorMate">
+    <meta property="og:url" content="https://tutormate.ai/">
+    <meta property="og:title" content="TutorMate: AI Homework Helper That Checks Your Work">
+    <meta property="og:description" content="TutorMate is an AI homework helper that checks work you already did and explains why. Turn any worksheet into a practice quiz. 10 free checks, then $4.95/mo.">
+    <meta property="og:image" content="https://tutormate.ai/Assets/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="TutorMate: AI homework helper that checks your work and explains the reasoning.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="TutorMate: AI Homework Helper That Checks Your Work">
+    <meta name="twitter:description" content="TutorMate is an AI homework helper that checks work you already did and explains why. Turn any worksheet into a practice quiz. 10 free checks, then $4.95/mo.">
+    <meta name="twitter:image" content="https://tutormate.ai/Assets/og-image.png">
+
     <link rel="icon" type="image/png" href="/Assets/TutorMateLogoTransparent.png">
+    <link rel="apple-touch-icon" href="/Assets/TutorMateLogoTransparent.png">
 
     <!-- If this page is ever loaded inside the native app shell (Capacitor), skip
          straight to the app instead of showing the marketing page. Harmless no-op
          in a normal browser, where window.Capacitor is undefined. -->
     <script>
         if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-            window.location.replace('app/index.html');
+            window.location.replace('/app/');
         }
     </script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Brand navy palette (matches the iOS app)
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        navy: {
-                            50: '#EEF1F8',
-                            200: '#B9C4DE',
-                            400: '#5B6B96',
-                            500: '#3C4A72',
-                            600: '#2A3760',
-                            700: '#202B52',
-                            800: '#1B2447',
-                            900: '#131A35'
-                        }
-                    }
-                }
-            }
-        };
-    </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        .font-title {
-            font-family: 'Nunito', sans-serif;
-            font-weight: 800;
-        }
-
-        /* Snap-scrolling was removed: combined with the sticky nav and
-           Safari's expanding/collapsing address bar on iOS, it caused
-           sections to occasionally land partially hidden underneath the
-           nav. scroll-padding-top is kept so anchor-link jumps (e.g. the
-           "How it works" nav link) still clear the sticky nav. */
-        :root {
-            --nav-h: 4rem;
-        }
-        html {
-            scroll-padding-top: var(--nav-h);
-            scroll-behavior: smooth;
-        }
-        .snap-fill {
-            min-height: 100vh;
-            min-height: calc(100svh - var(--nav-h));
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            html {
-                scroll-behavior: auto;
-            }
-        }
-    </style>
+    <link rel="preload" href="/fonts/nunito-800.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles/tailwind.css">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 
@@ -82,11 +44,13 @@
     <nav class="w-full bg-navy-800 shadow-md sticky top-0 z-50">
         <div class="w-full flex justify-between items-center max-w-5xl mx-auto px-4 h-16">
             <a href="/" class="flex items-center gap-2">
-                <img src="Assets/TutorMateLogoTransparent.png" alt="TutorMate" class="h-9 w-9 brightness-0 invert">
+                <img src="/Assets/TutorMateLogoTransparent.png" alt="TutorMate" width="221" height="199" class="h-9 w-9 brightness-0 invert">
                 <span class="text-white font-title text-lg">TutorMate</span>
             </a>
             <div class="flex items-center gap-5">
-                <a href="#how-it-works" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">How it works</a>
+                <a href="/homework-help/" class="hidden md:inline text-white/80 hover:text-white text-sm font-medium">Homework help</a>
+                <a href="/quiz-generator/" class="hidden md:inline text-white/80 hover:text-white text-sm font-medium">Quiz generator</a>
+                <a href="#faq" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">FAQ</a>
                 <a href="#pricing" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">Pricing</a>
                 <a href="/app/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
                     Open the App
@@ -98,13 +62,18 @@
     <!-- Hero -->
     <header class="bg-navy-800 snap-fill">
         <div class="max-w-3xl mx-auto px-6 py-10 text-center">
-            <img src="Assets/TutorMateLogoTransparent.png" alt="TutorMate logo" class="mx-auto w-32 mb-6 brightness-0 invert">
+            <img src="/Assets/TutorMateLogoTransparent.png" alt="TutorMate logo" width="221" height="199" class="mx-auto w-32 mb-6 brightness-0 invert">
             <h1 class="font-title text-3xl sm:text-4xl text-white leading-tight">
-                Check your work.<br>Study smarter.
+                The AI homework helper that<br>checks your work
             </h1>
             <p class="mt-5 text-navy-50 text-lg max-w-xl mx-auto">
-                Snap a photo of your assignment and get clear, helpful feedback, or turn any topic into a
-                custom quiz to practice for your next test. TutorMate helps you learn it, not just finish it.
+                Snap a photo of a finished assignment and TutorMate marks what's right, what's off, and
+                explains why. Or turn any worksheet, topic, or set of notes into a custom practice quiz
+                for your next test. It helps you learn the material, not just finish it.
+            </p>
+            <p class="mt-4 text-navy-50/90 text-sm max-w-xl mx-auto">
+                Works on the web and on iPhone. Your first 10 assignment checks and quizzes are free, then
+                $4.95 per month or $49 per year.
             </p>
             <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="/app/" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 transition-all">
@@ -129,8 +98,11 @@
                         <video
                             id="demo-video"
                             class="w-full block"
-                            src="Assets/TutorMateDemo.mp4"
-                            poster="Assets/TutorMateDemoPoster.jpg"
+                            src="/Assets/TutorMateDemo.mp4"
+                            poster="/Assets/TutorMateDemoPoster.jpg"
+                            width="794"
+                            height="1716"
+                            style="aspect-ratio: 794 / 1716;"
                             playsinline
                             preload="metadata"
                         >
@@ -266,13 +238,108 @@
 
     <!-- For students and parents -->
     <section class="snap-fill max-w-3xl mx-auto px-6 py-14 text-center">
-        <h2 class="font-title text-2xl text-navy-900">Made for students. Trusted by parents.</h2>
+        <h2 class="font-title text-2xl text-navy-900">Built to teach, not to hand over answers</h2>
         <p class="mt-4 text-slate-600 leading-relaxed">
-            TutorMate isn't an answer machine. When you upload an assignment, it checks your work and explains
-            what's right, what's off, and why, so you actually understand the material. When you want to
-            practice, it builds a quiz from your notes or any topic you type in. It's a study partner, not a
-            shortcut, which is why students <em>and</em> parents feel good about it.
+            TutorMate is deliberately not an answer machine. You do the work first; TutorMate checks it
+            afterwards. When you upload a finished assignment, it marks what's right, what's off, and
+            explains the reasoning behind each one, so you understand the method rather than copying a
+            result. When you want to practice, it builds a quiz from your notes or any topic you type in.
+            That design choice is why it is a study partner rather than a shortcut.
         </p>
+        <p class="mt-4 text-slate-600 leading-relaxed">
+            It reads handwritten work as well as printed worksheets, so you can photograph a page you
+            filled in by hand and get it checked.
+        </p>
+    </section>
+
+
+    <!-- FAQ -->
+    <section id="faq" class="bg-white border-y border-slate-200">
+        <div class="max-w-3xl mx-auto px-6 py-16">
+            <h2 class="font-title text-2xl text-navy-900 text-center">Frequently asked questions</h2>
+
+            <div class="mt-10 space-y-8">
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">Is TutorMate a cheating app?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        No. TutorMate is built around checking work you have already done, not producing
+                        answers for you to copy. You complete the assignment, photograph it, and TutorMate
+                        marks each answer right or wrong and explains the reasoning. The quiz generator
+                        works the same way: it creates practice questions from your material so you can
+                        test yourself. Teachers and parents generally object to tools that supply finished
+                        answers on demand; TutorMate's workflow requires you to attempt the work first.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">How much does TutorMate cost?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        TutorMate costs $4.95 per month or $49 per year. Your first 10 assignment checks and
+                        quizzes are free, with no credit card required to start. The price is the same
+                        whether you subscribe on the web or in the iOS app, and you can cancel at any time.
+                        The annual plan works out to roughly $4.08 per month.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">Can TutorMate check handwritten homework?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        Yes. TutorMate reads handwritten answers as well as printed worksheets. Photograph
+                        the page you filled in by hand and it will work through the answers one by one.
+                        Clear, well-lit photos of the whole page give the most reliable results, and dense
+                        or heavily annotated worksheets take longer to process than simple ones.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">What devices does TutorMate work on?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        TutorMate runs in any modern web browser at tutormate.ai and as a native iPhone and
+                        iPad app on the App Store. Your folders and saved work sync across both, so you can
+                        photograph a worksheet on your phone and review it later on a laptop. There is no
+                        Android app at present; Android users can use the web version.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">How is TutorMate different from Photomath, Socratic, Gauth, and Chegg?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        Most homework apps are solvers: you photograph a question you have not answered and
+                        they return the worked solution. TutorMate inverts that. It is a checker, so you
+                        photograph a question you have already answered and it tells you whether you got it
+                        right and why. Photomath and Gauth focus on solving math problems step by step.
+                        Socratic surfaces explanations and resources for a question. Chegg provides
+                        textbook solutions and expert answers at a substantially higher subscription price.
+                        TutorMate also generates practice quizzes from your own material, which solver apps
+                        generally do not.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">Who makes TutorMate?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        TutorMate is built by Walker Intelligence Group and published on the App Store by
+                        Dustin Michael Walker. It is an independent product, not affiliated with any school
+                        district or tutoring charity. Note that the name is shared with an unrelated
+                        volunteer early-literacy reading program run by the nonprofit Chapter One; this
+                        site is the AI homework-checking app at tutormate.ai. Support questions go to
+                        <a href="mailto:support@tutormate.ai" class="text-navy-700 underline">support@tutormate.ai</a>.
+                    </p>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-navy-900 text-lg">What happens to the photos I upload?</h3>
+                    <p class="mt-2 text-slate-600 leading-relaxed">
+                        Images and text you submit are sent over an encrypted connection to TutorMate's
+                        server and processed by Google's Gemini API to produce the feedback or quiz. Work
+                        you save to folders is stored in Google Firebase and kept until you delete it. Your
+                        content is never used for advertising and is never sold. You can permanently delete
+                        your account and everything in it from the app menu. The
+                        <a href="/privacy/" class="text-navy-700 underline">privacy policy</a> sets this out in full.
+                    </p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Pricing -->
@@ -303,13 +370,183 @@
 
     <footer class="bg-navy-900">
         <div class="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p class="text-xs text-navy-200">&copy; 2026 TutorMate. All rights reserved.</p>
-            <div class="flex gap-5 text-xs text-navy-200">
-                <a href="/privacy" class="hover:text-white">Privacy Policy</a>
-                <a href="/app/" class="hover:text-white">Open the App</a>
+            <p class="text-xs text-navy-200">
+                &copy; 2026 TutorMate, a product of Walker Intelligence Group. All rights reserved.
+            </p>
+            <div class="flex flex-wrap justify-center gap-5 text-xs text-navy-200">
+                <a href="/about/" class="hover:text-white">About</a>
+                <a href="/homework-help/" class="hover:text-white">Homework help</a>
+                <a href="/quiz-generator/" class="hover:text-white">Quiz generator</a>
+                <a href="/vs/photomath/" class="hover:text-white">vs Photomath</a>
+                <a href="/privacy/" class="hover:text-white">Privacy Policy</a>
+                <a href="mailto:support@tutormate.ai" class="hover:text-white">Support</a>
             </div>
         </div>
     </footer>
+
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://tutormate.ai/#publisher",
+      "name": "Walker Intelligence Group",
+      "url": "https://walkerig.com/",
+      "description": "Walker Intelligence Group builds AI products, including the TutorMate study app.",
+      "email": "support@tutormate.ai",
+      "founder": {
+        "@type": "Person",
+        "name": "Dustin Michael Walker"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://tutormate.ai/#website",
+      "url": "https://tutormate.ai/",
+      "name": "TutorMate",
+      "description": "AI homework helper that checks completed work and explains the reasoning, and generates practice quizzes from any worksheet or topic.",
+      "inLanguage": "en",
+      "publisher": {
+        "@id": "https://tutormate.ai/#publisher"
+      }
+    },
+    {
+      "@type": [
+        "SoftwareApplication",
+        "WebApplication"
+      ],
+      "@id": "https://tutormate.ai/#app",
+      "name": "TutorMate",
+      "alternateName": "TutorMate: AI Homework Helper",
+      "applicationCategory": "EducationalApplication",
+      "applicationSubCategory": "Homework and study tool",
+      "operatingSystem": "iOS, Web browser",
+      "url": "https://tutormate.ai/",
+      "installUrl": "https://apps.apple.com/app/id6793738685",
+      "browserRequirements": "Requires a modern web browser with JavaScript enabled.",
+      "inLanguage": "en",
+      "image": "https://tutormate.ai/Assets/og-image.png",
+      "screenshot": "https://tutormate.ai/Assets/TutorMateDemoPoster.jpg",
+      "description": "TutorMate is an AI homework helper that checks work you have already completed rather than solving problems for you. Photograph a finished assignment, including handwritten answers, and it marks each answer right or wrong and explains the reasoning. It also turns any worksheet, topic, or set of notes into a custom practice quiz. Available on the web and on iOS.",
+      "featureList": [
+        "Checks completed homework and explains why each answer is right or wrong",
+        "Reads handwritten as well as printed worksheets",
+        "Generates custom practice quizzes from a photo, topic, or notes",
+        "Saves work to folders that sync between web and iOS"
+      ],
+      "isAccessibleForFree": true,
+      "publisher": {
+        "@id": "https://tutormate.ai/#publisher"
+      },
+      "author": {
+        "@id": "https://tutormate.ai/#publisher"
+      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "First 10 assignment checks and quizzes, no credit card required."
+        },
+        {
+          "@type": "Offer",
+          "name": "Premium Monthly",
+          "price": "4.95",
+          "priceCurrency": "USD",
+          "url": "https://tutormate.ai/app/?plan=monthly",
+          "availability": "https://schema.org/InStock"
+        },
+        {
+          "@type": "Offer",
+          "name": "Premium Annual",
+          "price": "49.00",
+          "priceCurrency": "USD",
+          "url": "https://tutormate.ai/app/?plan=annual",
+          "availability": "https://schema.org/InStock"
+        }
+      ]
+    },
+    {
+      "@type": "VideoObject",
+      "@id": "https://tutormate.ai/#demo",
+      "name": "How TutorMate checks your homework and builds a practice quiz",
+      "description": "A walkthrough of TutorMate: photographing a completed worksheet, reading the answer-by-answer feedback and explanations, and generating a custom practice quiz from the same material.",
+      "thumbnailUrl": "https://tutormate.ai/Assets/TutorMateDemoPoster.jpg",
+      "contentUrl": "https://tutormate.ai/Assets/TutorMateDemo.mp4",
+      "uploadDate": "2026-10-19",
+      "duration": "PT48S",
+      "inLanguage": "en",
+      "publisher": {
+        "@id": "https://tutormate.ai/#publisher"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://tutormate.ai/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is TutorMate a cheating app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. TutorMate is built around checking work you have already done, not producing answers for you to copy. You complete the assignment, photograph it, and TutorMate marks each answer right or wrong and explains the reasoning. The quiz generator works the same way: it creates practice questions from your material so you can test yourself. Teachers and parents generally object to tools that supply finished answers on demand; TutorMate's workflow requires you to attempt the work first."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much does TutorMate cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TutorMate costs $4.95 per month or $49 per year. Your first 10 assignment checks and quizzes are free, with no credit card required to start. The price is the same whether you subscribe on the web or in the iOS app, and you can cancel at any time. The annual plan works out to roughly $4.08 per month."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can TutorMate check handwritten homework?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. TutorMate reads handwritten answers as well as printed worksheets. Photograph the page you filled in by hand and it will work through the answers one by one. Clear, well-lit photos of the whole page give the most reliable results, and dense or heavily annotated worksheets take longer to process than simple ones."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What devices does TutorMate work on?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TutorMate runs in any modern web browser at tutormate.ai and as a native iPhone and iPad app on the App Store. Your folders and saved work sync across both, so you can photograph a worksheet on your phone and review it later on a laptop. There is no Android app at present; Android users can use the web version."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is TutorMate different from Photomath, Socratic, Gauth, and Chegg?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most homework apps are solvers: you photograph a question you have not answered and they return the worked solution. TutorMate inverts that. It is a checker, so you photograph a question you have already answered and it tells you whether you got it right and why. Photomath and Gauth focus on solving math problems step by step. Socratic surfaces explanations and resources for a question. Chegg provides textbook solutions and expert answers at a substantially higher subscription price. TutorMate also generates practice quizzes from your own material, which solver apps generally do not."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Who makes TutorMate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "TutorMate is built by Walker Intelligence Group and published on the App Store by Dustin Michael Walker. It is an independent product, not affiliated with any school district or tutoring charity. Note that the name is shared with an unrelated volunteer early-literacy reading program run by the nonprofit Chapter One; this site is the AI homework-checking app at tutormate.ai. Support questions go to support@tutormate.ai."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens to the photos I upload?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Images and text you submit are sent over an encrypted connection to TutorMate's server and processed by Google's Gemini API to produce the feedback or quiz. Work you save to folders is stored in Google Firebase and kept until you delete it. Your content is never used for advertising and is never sold. You can permanently delete your account and everything in it from the app menu. The privacy policy sets this out in full."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
 
 </body>
 </html>
