@@ -71,6 +71,8 @@ check(hero.find('data-placement="hero"') < hero.find('data-cta="browser"'), "hom
 check("Download for iPhone and iPad" in hero, "homepage names iPhone and iPad as the download")
 check("Open the App" not in home, "homepage nav no longer leads with the browser button")
 check('id="ios-app-link"' in home, "homepage keeps the existing iOS link id")
+check('id="demo-video"' in home and 'preload="none"' in home and 'poster="/Assets/TutorMateDemoPoster.jpg"' in home, "homepage video waits for play and keeps its poster")
+check('src="/Assets/TutorMateDemo.mp4"' in home, "homepage video still points at the real demo file")
 for guide in GUIDES:
     check(f'href="{guide}"' in home, f"homepage links to {guide}")
 check("Educational illustration" not in home or "captured TutorMate response" in home, "homepage labels examples as authored")
