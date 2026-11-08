@@ -19,6 +19,9 @@ PRIORITY = {
     "/homework-help/": ("0.9", "monthly"),
     "/quiz-generator/": ("0.9", "monthly"),
     "/vs/photomath/": ("0.8", "monthly"),
+    "/algebra/": ("0.8", "monthly"),
+    "/biology/": ("0.8", "monthly"),
+    "/written-answers/": ("0.8", "monthly"),
     "/about/": ("0.7", "monthly"),
     "/privacy/": ("0.3", "yearly"),
 }

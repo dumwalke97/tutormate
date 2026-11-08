@@ -11,6 +11,14 @@
     <!-- Smart App Banner: turns iPhone web visitors into attributed App Store
          installs. Apple reports these as a distinct source in App Analytics. -->
     <meta name="apple-itunes-app" content="app-id=6793738685">
+    <script>
+        (function () {
+            var ua = navigator.userAgent || "";
+            var iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+            var native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+            if (iOS && !native) document.documentElement.classList.add("is-ios");
+        })();
+    </script>
     <meta name="robots" content="index, follow">
 
     <meta property="og:type" content="article">
@@ -111,6 +119,17 @@
             <a href="/" class="text-navy-700 underline">← Back to TutorMate</a>
         </footer>
     </div>
+    <div id="ios-download-bar" hidden>
+        <div class="ios-bar-inner">
+            <p class="ios-bar-title">For iPhone and iPad</p>
+            <a href="https://apps.apple.com/app/id6793738685" data-placement="ios-sticky" class="ios-bar-btn">Get the app</a>
+            <a href="/app/" class="ios-bar-browser">Browser</a>
+            <button type="button" id="ios-download-dismiss" aria-label="Dismiss the App Store suggestion">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+    <script src="/scripts/store-cta.js" defer></script>
     <script type="application/ld+json">
 {
   "@context": "https://schema.org",

@@ -65,6 +65,14 @@ all uploaded content from the app menu.
   create a practice quiz and why self-testing beats re-reading.
 - [TutorMate vs Photomath](https://tutormate.ai/vs/photomath/): checker versus
   solver, with a feature comparison.
+- [Algebra](https://tutormate.ai/algebra/): how to check finished algebra, with a
+  textbook worked example of 3(x - 2) = 15. The example is written for the page.
+  It is not a captured TutorMate response.
+- [Biology](https://tutormate.ai/biology/): a photosynthesis practice quiz from
+  notes or a typed topic. The app's quiz box uses that topic as an example.
+  The sample question on the page is an educational illustration.
+- [Written answers](https://tutormate.ai/written-answers/): checking definitions
+  and short answers, including how a text match differs from a numeric match.
 - [About](https://tutormate.ai/about/): who builds TutorMate, the design
   rationale, and the name disambiguation.
 - [Privacy policy](https://tutormate.ai/privacy/): data collection, processing,
