@@ -44,37 +44,29 @@ html {
   }
 }
 
-/* iPhone download path. Desktop and non-iOS mobile keep the browser button
-   first and filled. html.is-ios is set before paint by a tiny head script. */
-.nav-ios,
-.nav-browser-text,
-.ios-hint {
-  display: none;
-}
-
-html.is-ios .nav-ios {
+/* The App Store download is the primary action on every page, including
+   desktop. The browser link stays visible and secondary. html.is-ios only
+   turns on the iPhone bar and the tighter hero; it does not decide priority. */
+.nav-ios {
   display: inline-flex;
   flex-shrink: 0;
+  align-items: center;
   white-space: nowrap;
 }
 
-html.is-ios .nav-browser-text {
+.nav-browser-text {
   display: inline;
 }
 
-html.is-ios .nav-browser-btn {
-  display: none;
+.cta-note {
+  display: block;
 }
 
 @media (max-width: 389px) {
-  html.is-ios .nav-brand-text,
-  html.is-ios .nav-browser-text {
+  .nav-brand-text,
+  .nav-browser-text {
     display: none;
   }
-}
-
-html.is-ios .ios-hint {
-  display: block;
 }
 
 html.is-ios header.snap-fill {
@@ -126,52 +118,30 @@ html.is-ios .hero-logo {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.btn-browser {
+.btn-store {
   color: #fff;
   background: #0ea5e9;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
-.btn-browser:hover {
-  background: #0284c7;
-}
-
-.btn-store {
-  color: #fff;
-  background: transparent;
-  border: 2px solid rgb(255 255 255 / 0.4);
-}
-
 .btn-store:hover {
-  background: rgb(255 255 255 / 0.1);
-}
-
-html.is-ios .cta-row .btn-store {
-  order: -1;
-  background: #0ea5e9;
-  border-color: transparent;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-}
-
-html.is-ios .cta-row .btn-store:hover {
   background: #0284c7;
 }
 
-html.is-ios .cta-row .btn-browser {
-  order: 1;
+.btn-browser {
+  color: #fff;
   background: transparent;
   border: 2px solid rgb(255 255 255 / 0.4);
   box-shadow: none;
 }
 
-html.is-ios .cta-row .btn-browser:hover {
+.btn-browser:hover {
   background: rgb(255 255 255 / 0.1);
 }
 
 .btn-cta:focus-visible,
 .nav-ios:focus-visible,
-.nav-browser-btn:focus-visible,
 .nav-browser-text:focus-visible,
 .ios-bar-btn:focus-visible,
 .ios-bar-browser:focus-visible,

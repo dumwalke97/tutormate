@@ -63,11 +63,13 @@ for path, html in pages.items():
     check("pt=" not in html, f"{path} must not invent an Apple provider token")
     check("gtag/js" not in html and "googletagmanager.com" not in html, f"{path} new tracker")
 
-# Homepage keeps the browser CTA ahead of the App Store CTA in DOM order.
+# The App Store download is first in the DOM on every marketing CTA, including desktop.
 home = pages["/"]
 hero = home.split('class="cta-row mt-8"', 1)[-1].split("</div>", 1)[0]
 check('data-cta="browser"' in hero and 'data-placement="hero"' in hero, "homepage hero CTAs")
-check(hero.find('data-cta="browser"') < hero.find('data-placement="hero"'), "desktop DOM keeps browser before App Store")
+check(hero.find('data-placement="hero"') < hero.find('data-cta="browser"'), "homepage puts the App Store CTA before the browser")
+check("Download for iPhone and iPad" in hero, "homepage names iPhone and iPad as the download")
+check("Open the App" not in home, "homepage nav no longer leads with the browser button")
 check('id="ios-app-link"' in home, "homepage keeps the existing iOS link id")
 for guide in GUIDES:
     check(f'href="{guide}"' in home, f"homepage links to {guide}")
@@ -78,6 +80,10 @@ for guide in GUIDES:
     flat = re.sub(r"\s+", " ", html.lower())
     check("Educational illustration" in html, f"{guide} labels the example")
     check("not a screenshot" in flat, f"{guide} denies a fake screenshot")
+    section = html.split('class="cta-row', 1)[-1].split("</div>", 1)[0]
+    check(section.find('data-placement="section"') < section.find('data-cta="browser"'), f"{guide} puts the App Store CTA before the browser")
+    check("Download for iPhone and iPad" in section, f"{guide} names iPhone and iPad as the download")
+    check("Open the App" not in html, f"{guide} nav no longer leads with the browser button")
     check(APP_STORE in html and 'data-placement="section"' in html, f"{guide} section App Store link")
     check('data-placement="nav"' in html and 'data-placement="ios-sticky"' in html, f"{guide} nav and sticky placements")
     check('src="/scripts/store-cta.js"' in html, f"{guide} click hook")
@@ -123,12 +129,14 @@ expected = sorted(f"{SITE}{path}" for path in INDEXABLE)
 check(locs == expected, f"sitemap URLs {locs} != {expected}")
 
 css = (ROOT / "src" / "tailwind.css").read_text(encoding="utf-8")
-check("html.is-ios .cta-row .btn-store" in css and "order: -1" in css, "iOS CSS promotes the App Store button")
-check(".nav-browser-btn" in css, "iOS CSS keeps a browser control")
+check(".btn-store" in css and "background: #0ea5e9" in css, "App Store button is the filled primary style")
+check("html.is-ios .cta-row .btn-store" not in css, "download priority does not depend on an iPhone class")
+check(".nav-browser-text" in css, "browser link remains in the stylesheet")
 built_css = (WWW / "styles" / "tailwind.css").read_text(encoding="utf-8")
-inline_rule = built_css.find("html.is-ios .nav-browser-text{display:inline}")
+browser_rule = built_css.find(".nav-browser-text{display:inline}")
 narrow_rule = built_css.find("max-width:389px")
-check(inline_rule > 0 and narrow_rule > inline_rule, "narrow iOS nav rule overrides the wider iOS nav link")
+check(browser_rule > 0 and narrow_rule > browser_rule, "narrow nav rule overrides the browser text link")
+check("order:-1" not in built_css, "built CSS does not reorder a browser-first row")
 
 hook = (WWW / "scripts" / "store-cta.js").read_text(encoding="utf-8")
 check("page_path" in hook and "placement" in hook, "click hook fields")

@@ -4,7 +4,7 @@ This is the external setup still required. The website does not claim that click
 
 ## What the site does now
 
-Marketing pages load `/scripts/store-cta.js`. When someone clicks an App Store link that has a `data-placement` attribute, the script:
+The App Store download is the primary button in the nav, the homepage hero, and the section at the bottom of each guide, on desktop as well as on iPhone. The browser link stays on the page as the secondary action. A short bar is added only on iPhone and iPad. Marketing pages load `/scripts/store-cta.js`. When someone clicks an App Store link that has a `data-placement` attribute, the script:
 
 1. Dispatches a `tutormate:app-store-click` event on `document`.
 2. If `window.gtag` is already a function, calls it with event name `app_store_click`.

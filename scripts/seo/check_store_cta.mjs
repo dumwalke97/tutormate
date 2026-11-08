@@ -106,7 +106,7 @@ const desktop = boot({
     platform: 'MacIntel',
     maxTouchPoints: 0,
 });
-check(!desktop.htmlClasses.has('is-ios'), 'desktop Safari does not get the iOS layout');
+check(!desktop.htmlClasses.has('is-ios'), 'desktop does not turn on the iPhone-only bar');
 check(desktop.bar.hidden === true, 'desktop leaves the download bar hidden');
 
 const ipad = boot({

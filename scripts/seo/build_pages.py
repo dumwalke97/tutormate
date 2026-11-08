@@ -27,7 +27,7 @@ IOS_HEAD_SCRIPT = """    <script>
 
 IOS_BAR = f"""    <div id="ios-download-bar" hidden>
         <div class="ios-bar-inner">
-            <p class="ios-bar-title">TutorMate for iPhone</p>
+            <p class="ios-bar-title">For iPhone and iPad</p>
             <a href="{APP_STORE}" data-placement="ios-sticky" class="ios-bar-btn">Get the app</a>
             <a href="/app/" class="ios-bar-browser">Browser</a>
             <button type="button" id="ios-download-dismiss" aria-label="Dismiss the App Store suggestion">
@@ -58,11 +58,8 @@ NAV = f"""    <nav class="w-full bg-navy-800 shadow-md sticky top-0 z-50">
                 <a href="/#faq" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">FAQ</a>
                 <a href="/#pricing" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">Pricing</a>
                 <a href="/app/" class="nav-browser-text text-white/80 hover:text-white text-sm font-medium">In browser</a>
-                <a href="{APP_STORE}" data-placement="nav" class="nav-ios items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
+                <a href="{APP_STORE}" data-placement="nav" aria-label="Download TutorMate for iPhone and iPad" class="nav-ios px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
                     Get the iOS app
-                </a>
-                <a href="/app/" class="nav-browser-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
-                    Open the App
                 </a>
             </div>
         </div>
@@ -89,21 +86,21 @@ FOOTER = """    <footer class="bg-navy-900 mt-16">
     </footer>
 """
 
-CTA = f"""    <section class="max-w-3xl mx-auto px-6 py-12 text-center">
+CTA = f"""    <section id="download" class="max-w-3xl mx-auto px-6 py-12 text-center">
         <div class="rounded-2xl bg-navy-800 px-6 py-10">
             <h2 class="font-title text-2xl text-white">Try it on your next assignment</h2>
             <p class="mt-3 text-navy-50 max-w-lg mx-auto">
                 Your first 10 assignment checks and quizzes are free. No credit card needed to start.
             </p>
             <div class="cta-row mt-7">
-                <a href="/app/" data-cta="browser" class="btn-cta btn-browser">
-                    Open TutorMate in your browser
-                </a>
                 <a href="{APP_STORE}" data-cta="ios" data-placement="section" class="btn-cta btn-store">
-                    Get the iOS app
+                    Download for iPhone and iPad
+                </a>
+                <a href="/app/" data-cta="browser" class="btn-cta btn-browser">
+                    Use it in the browser
                 </a>
             </div>
-            <p class="ios-hint mt-3 text-navy-200 text-xs">On iPhone, the app is the direct way to photograph a worksheet. The browser version stays one tap away.</p>
+            <p class="cta-note mt-3 text-navy-200 text-xs">The download is the iPhone and iPad app. A Mac, PC, or Android phone can use the browser.</p>
         </div>
     </section>
 """
