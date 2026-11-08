@@ -43,3 +43,224 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/* iPhone download path. Desktop and non-iOS mobile keep the browser button
+   first and filled. html.is-ios is set before paint by a tiny head script. */
+.nav-ios,
+.nav-browser-text,
+.ios-hint {
+  display: none;
+}
+
+html.is-ios .nav-ios {
+  display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+html.is-ios .nav-browser-text {
+  display: inline;
+}
+
+html.is-ios .nav-browser-btn {
+  display: none;
+}
+
+@media (max-width: 389px) {
+  html.is-ios .nav-brand-text,
+  html.is-ios .nav-browser-text {
+    display: none;
+  }
+}
+
+html.is-ios .ios-hint {
+  display: block;
+}
+
+html.is-ios header.snap-fill {
+  min-height: 0;
+  justify-content: flex-start;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+html.is-ios .hero-logo {
+  width: 4.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.cta-row .btn-cta {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .cta-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .cta-row .btn-cta {
+    width: auto;
+  }
+}
+
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  text-align: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-browser {
+  color: #fff;
+  background: #0ea5e9;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+.btn-browser:hover {
+  background: #0284c7;
+}
+
+.btn-store {
+  color: #fff;
+  background: transparent;
+  border: 2px solid rgb(255 255 255 / 0.4);
+}
+
+.btn-store:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+html.is-ios .cta-row .btn-store {
+  order: -1;
+  background: #0ea5e9;
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+html.is-ios .cta-row .btn-store:hover {
+  background: #0284c7;
+}
+
+html.is-ios .cta-row .btn-browser {
+  order: 1;
+  background: transparent;
+  border: 2px solid rgb(255 255 255 / 0.4);
+  box-shadow: none;
+}
+
+html.is-ios .cta-row .btn-browser:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.btn-cta:focus-visible,
+.nav-ios:focus-visible,
+.nav-browser-btn:focus-visible,
+.nav-browser-text:focus-visible,
+.ios-bar-btn:focus-visible,
+.ios-bar-browser:focus-visible,
+#ios-download-dismiss:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+#ios-download-bar[hidden] {
+  display: none !important;
+}
+
+#ios-download-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  background: #131a35;
+  color: #fff;
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+.ios-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.ios-bar-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.ios-bar-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ios-bar-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.375rem;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ios-bar-btn:hover {
+  background: #0284c7;
+}
+
+.ios-bar-browser {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  color: #b9c4de;
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+
+#ios-download-dismiss {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body.has-ios-bar {
+  padding-bottom: 5rem;
+}

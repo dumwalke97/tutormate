@@ -11,6 +11,31 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 WWW = ROOT / "www"
 SITE = "https://tutormate.ai"
+# Verified listing id 6793738685. No Apple provider token (pt) is in this repo,
+# so campaign parameters are intentionally absent. See docs/analytics/app-store-clicks.md.
+APP_STORE = "https://apps.apple.com/app/id6793738685"
+
+IOS_HEAD_SCRIPT = """    <script>
+        (function () {
+            var ua = navigator.userAgent || "";
+            var iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+            var native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+            if (iOS && !native) document.documentElement.classList.add("is-ios");
+        })();
+    </script>
+"""
+
+IOS_BAR = f"""    <div id="ios-download-bar" hidden>
+        <div class="ios-bar-inner">
+            <p class="ios-bar-title">TutorMate for iPhone</p>
+            <a href="{APP_STORE}" data-placement="ios-sticky" class="ios-bar-btn">Get the app</a>
+            <a href="/app/" class="ios-bar-browser">Browser</a>
+            <button type="button" id="ios-download-dismiss" aria-label="Dismiss the App Store suggestion">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+"""
 
 PUBLISHER = {
     "@type": "Organization",
@@ -21,18 +46,22 @@ PUBLISHER = {
     "founder": {"@type": "Person", "name": "Dustin Michael Walker"},
 }
 
-NAV = """    <nav class="w-full bg-navy-800 shadow-md sticky top-0 z-50">
+NAV = f"""    <nav class="w-full bg-navy-800 shadow-md sticky top-0 z-50">
         <div class="w-full flex justify-between items-center max-w-5xl mx-auto px-4 h-16">
             <a href="/" class="flex items-center gap-2">
                 <img src="/Assets/TutorMateLogoTransparent.png" alt="TutorMate" width="221" height="199" class="h-9 w-9 brightness-0 invert">
-                <span class="text-white font-title text-lg">TutorMate</span>
+                <span class="nav-brand-text text-white font-title text-lg">TutorMate</span>
             </a>
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3 sm:gap-5">
                 <a href="/homework-help/" class="hidden md:inline text-white/80 hover:text-white text-sm font-medium">Homework help</a>
                 <a href="/quiz-generator/" class="hidden md:inline text-white/80 hover:text-white text-sm font-medium">Quiz generator</a>
                 <a href="/#faq" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">FAQ</a>
                 <a href="/#pricing" class="hidden sm:inline text-white/80 hover:text-white text-sm font-medium">Pricing</a>
-                <a href="/app/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
+                <a href="/app/" class="nav-browser-text text-white/80 hover:text-white text-sm font-medium">In browser</a>
+                <a href="{APP_STORE}" data-placement="nav" class="nav-ios items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
+                    Get the iOS app
+                </a>
+                <a href="/app/" class="nav-browser-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-navy-900 bg-white hover:bg-slate-100 transition-all">
                     Open the App
                 </a>
             </div>
@@ -49,6 +78,9 @@ FOOTER = """    <footer class="bg-navy-900 mt-16">
                 <a href="/about/" class="hover:text-white">About</a>
                 <a href="/homework-help/" class="hover:text-white">Homework help</a>
                 <a href="/quiz-generator/" class="hover:text-white">Quiz generator</a>
+                <a href="/algebra/" class="hover:text-white">Algebra</a>
+                <a href="/biology/" class="hover:text-white">Biology</a>
+                <a href="/written-answers/" class="hover:text-white">Written answers</a>
                 <a href="/vs/photomath/" class="hover:text-white">vs Photomath</a>
                 <a href="/privacy/" class="hover:text-white">Privacy Policy</a>
                 <a href="mailto:support@tutormate.ai" class="hover:text-white">Support</a>
@@ -57,20 +89,21 @@ FOOTER = """    <footer class="bg-navy-900 mt-16">
     </footer>
 """
 
-CTA = """    <section class="max-w-3xl mx-auto px-6 py-12 text-center">
+CTA = f"""    <section class="max-w-3xl mx-auto px-6 py-12 text-center">
         <div class="rounded-2xl bg-navy-800 px-6 py-10">
             <h2 class="font-title text-2xl text-white">Try it on your next assignment</h2>
             <p class="mt-3 text-navy-50 max-w-lg mx-auto">
                 Your first 10 assignment checks and quizzes are free. No credit card needed to start.
             </p>
-            <div class="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="/app/" class="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-md shadow-sm text-white bg-sky-500 hover:bg-sky-600 transition-all">
+            <div class="cta-row mt-7">
+                <a href="/app/" data-cta="browser" class="btn-cta btn-browser">
                     Open TutorMate in your browser
                 </a>
-                <a href="https://apps.apple.com/app/id6793738685" class="inline-flex items-center justify-center px-6 py-3 border-2 border-white/40 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all">
+                <a href="{APP_STORE}" data-cta="ios" data-placement="section" class="btn-cta btn-store">
                     Get the iOS app
                 </a>
             </div>
+            <p class="ios-hint mt-3 text-navy-200 text-xs">On iPhone, the app is the direct way to photograph a worksheet. The browser version stays one tap away.</p>
         </div>
     </section>
 """
@@ -102,7 +135,7 @@ def page(path, title, description, slug_schema, body, trail):
     <!-- Smart App Banner: turns iPhone web visitors into attributed App Store
          installs. Apple reports these as a distinct source in App Analytics. -->
     <meta name="apple-itunes-app" content="app-id=6793738685">
-
+{IOS_HEAD_SCRIPT}
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="TutorMate">
     <meta property="og:url" content="{url}">
@@ -127,6 +160,8 @@ def page(path, title, description, slug_schema, body, trail):
 {body}
 {CTA}
 {FOOTER}
+{IOS_BAR}
+    <script src="/scripts/store-cta.js" defer></script>
     <script type="application/ld+json">
 {json.dumps(graph, indent=2, ensure_ascii=False)}
     </script>
@@ -354,8 +389,11 @@ page(
             Math solvers are narrow by construction: they parse an equation and run it. TutorMate reads
             the page and reasons about what is on it, so it is not restricted to numerical work. It handles
             written answers, definitions, short-answer questions, vocabulary, and mixed problem sets
-            alongside math. A solver cannot check a biology worksheet or a set of history short answers.
-            This can.
+            alongside math.             A solver cannot check a biology worksheet or a set of history short answers.
+            This can. See the worked examples for
+            <a href="/algebra/" class="text-navy-700 underline">algebra</a>,
+            <a href="/biology/" class="text-navy-700 underline">biology</a>, and
+            <a href="/written-answers/" class="text-navy-700 underline">short written answers</a>.
         </p>
 
         <h2 class="font-title text-2xl text-navy-900 mt-12">Is this cheating?</h2>
@@ -471,7 +509,7 @@ page(
             <li><strong class="text-slate-900">Photograph a worksheet.</strong> Point your camera at a study sheet, a textbook page, or a worksheet you have been given, and get questions drawn from it.</li>
             <li><strong class="text-slate-900">Upload a document.</strong> Feed it the handout or notes file you already have.</li>
             <li><strong class="text-slate-900">Paste your notes.</strong> Drop in the notes you took in class and review from what your teacher actually emphasized.</li>
-            <li><strong class="text-slate-900">Type a topic.</strong> No material to hand? Type the subject, such as the causes of the French Revolution or balancing chemical equations, and get a quiz on it.</li>
+            <li><strong class="text-slate-900">Type a topic.</strong> No material to hand? Type the subject, such as the causes of the French Revolution, balancing chemical equations, or <a href="/biology/" class="text-navy-700 underline">10th grade photosynthesis</a>, and get a quiz on it.</li>
         </ul>
 
         <h2 class="font-title text-2xl text-navy-900 mt-12">Quizzes from your material, not a generic bank</h2>
@@ -653,8 +691,9 @@ page(
         <p class="mt-4 text-slate-600 leading-relaxed">
             <strong class="text-slate-900">It is not restricted to math.</strong> A math solver cannot do
             anything with a biology worksheet, a set of history short answers, or a vocabulary exercise.
-            Because TutorMate reads the page and reasons about the content, it handles written answers and
-            definitions alongside numerical work.
+            Because TutorMate reads the page and reasons about the content, it handles
+            <a href="/written-answers/" class="text-navy-700 underline">written answers</a> and
+            definitions alongside <a href="/algebra/" class="text-navy-700 underline">numerical work</a>.
         </p>
         <p class="mt-4 text-slate-600 leading-relaxed">
             <strong class="text-slate-900">It generates practice.</strong> TutorMate turns a worksheet,
@@ -689,3 +728,8 @@ page(
 """,
     [("TutorMate", "/"), ("vs Photomath", "/vs/photomath/")],
 )
+
+
+import guide_pages
+
+guide_pages.add_guide_pages(page, SITE)

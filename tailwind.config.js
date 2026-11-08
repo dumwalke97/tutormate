@@ -9,6 +9,9 @@ module.exports = {
     './www/about/index.html',
     './www/homework-help/index.html',
     './www/quiz-generator/index.html',
+    './www/algebra/index.html',
+    './www/biology/index.html',
+    './www/written-answers/index.html',
     './www/vs/**/*.html',
   ],
   theme: {
