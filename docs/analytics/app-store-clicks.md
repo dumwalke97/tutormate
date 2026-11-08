@@ -1,6 +1,6 @@
 # App Store click measurement
 
-This is the external setup still required. The website does not claim that clicks are being recorded.
+This is the external setup still required. The website does not claim that clicks are being recorded. The privacy and performance notes for 2026-11-08 are in `docs/analytics/measurement-and-performance-2026-11-08.md`. Do not load a tracker from this hook until that note's conditions are met.
 
 ## What the site does now
 
