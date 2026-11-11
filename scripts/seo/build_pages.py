@@ -92,7 +92,7 @@ CTA = f"""    <section id="download" class="max-w-3xl mx-auto px-6 py-12 text-ce
             <p class="mt-3 text-navy-50 max-w-lg mx-auto">
                 Your first 10 assignment checks and quizzes are free. No credit card needed to start.
             </p>
-            <div class="cta-row mt-7">
+            <div class="cta-row text-white mt-7">
                 <a href="{APP_STORE}" data-cta="ios" data-placement="section" class="btn-cta btn-store">
                     Download for iPhone and iPad
                 </a>
@@ -149,7 +149,7 @@ def page(path, title, description, slug_schema, body, trail):
     <link rel="icon" type="image/png" href="/Assets/TutorMateLogoTransparent.png">
     <link rel="apple-touch-icon" href="/Assets/TutorMateLogoTransparent.png">
     <link rel="preload" href="/fonts/nunito-800.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/styles/tailwind.css">
+    <link rel="stylesheet" href="/styles/tailwind.5130087d.css">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
 

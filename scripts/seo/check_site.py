@@ -65,7 +65,7 @@ for path, html in pages.items():
 
 # The App Store download is first in the DOM on every marketing CTA, including desktop.
 home = pages["/"]
-hero = home.split('class="cta-row mt-8"', 1)[-1].split("</div>", 1)[0]
+hero = home.split('class="cta-row', 1)[-1].split("</div>", 1)[0]
 check('data-cta="browser"' in hero and 'data-placement="hero"' in hero, "homepage hero CTAs")
 check(hero.find('data-placement="hero"') < hero.find('data-cta="browser"'), "homepage puts the App Store CTA before the browser")
 check("Download for iPhone and iPad" in hero, "homepage names iPhone and iPad as the download")
@@ -132,7 +132,16 @@ css = (ROOT / "src" / "tailwind.css").read_text(encoding="utf-8")
 check(".btn-store" in css and "background: #0ea5e9" in css, "App Store button is the filled primary style")
 check("html.is-ios .cta-row .btn-store" not in css, "download priority does not depend on an iPhone class")
 check(".nav-browser-text" in css, "browser link remains in the stylesheet")
-built_css = (WWW / "styles" / "tailwind.css").read_text(encoding="utf-8")
+# The stylesheet ships under a content-hashed name so the immutable cache
+# header in netlify.toml cannot strand returning visitors on stale CSS.
+built = sorted((WWW / "styles").glob("tailwind.*.css"))
+check(len(built) == 1, f"exactly one built stylesheet, found {[f.name for f in built]}")
+built_css = built[0].read_text(encoding="utf-8")
+check(
+    all(f'href="/styles/{built[0].name}"' in (WWW / path.lstrip("/") / "index.html").read_text(encoding="utf-8")
+        for path in INDEXABLE),
+    f"every page links {built[0].name}",
+)
 browser_rule = built_css.find(".nav-browser-text{display:inline}")
 narrow_rule = built_css.find("max-width:389px")
 check(browser_rule > 0 and narrow_rule > browser_rule, "narrow nav rule overrides the browser text link")

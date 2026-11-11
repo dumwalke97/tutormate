@@ -9,7 +9,7 @@
     "tailwindcss": "^3.4.17"
   },
   "scripts": {
-    "build:css": "tailwindcss -i ./src/tailwind.css -o ./www/styles/tailwind.css --minify",
+    "build:css": "node scripts/build_css.mjs",
     "build:pages": "python3 scripts/seo/build_pages.py && python3 scripts/seo/build_sitemap.py",
     "build": "npm run build:css",
     "test": "python3 scripts/seo/check_site.py && node scripts/seo/check_store_cta.mjs"

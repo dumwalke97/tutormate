@@ -1,9 +1,10 @@
 [build]
   publish = "www"
   functions = "Netlify/Functions"
-  # Compiles src/tailwind.css to www/styles/tailwind.css. The marketing pages
-  # link that file instead of pulling the Tailwind CDN build, which was 127 KB
-  # of render-blocking JavaScript compiling CSS in every visitor's browser.
+  # Compiles src/tailwind.css to www/styles/tailwind.<hash>.css and rewrites the
+  # <link> in every page to match. The marketing pages link that file instead of
+  # pulling the Tailwind CDN build, which was 127 KB of render-blocking
+  # JavaScript compiling CSS in every visitor's browser.
   command = "npm run build:css"
 
 # ---------------------------------------------------------------------------
@@ -43,12 +44,16 @@
   [headers.values]
     X-Robots-Tag = "noindex, follow"
 
-# Fingerprint-free static assets. Safe to cache hard; bust by renaming.
+# Unfingerprinted static assets. Safe to cache hard; bust by renaming the file.
 [[headers]]
   for = "/Assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# The stylesheet filename carries a content hash (scripts/build_css.mjs), so a
+# year of immutable caching is safe: a CSS change ships under a new URL and the
+# HTML, which is revalidated on every visit, points at it. Do not go back to a
+# fixed filename here - that combination strands returning visitors on old CSS.
 [[headers]]
   for = "/styles/*"
   [headers.values]
